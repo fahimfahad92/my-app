@@ -25,21 +25,29 @@ export default function WeatherCitySearchForm({
   };
 
   return (
-    <Card className="w-full max-w-md p-2">
-      <CardContent className="p-4">
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <Card className="w-full max-w-md shadow-lg rounded-2xl border border-gray-200 bg-white">
+      <CardContent className="p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cityName">Enter city name</Label>
-            <div className="flex gap-2">
+            <Label
+              htmlFor="cityName"
+              className="text-sm font-medium text-gray-700"
+            >
+              Enter city name
+            </Label>
+            <div className="flex flex-col sm:flex-row gap-3">
               <Input
                 id="cityName"
                 {...register("cityName", { required: true })}
                 placeholder="e.g. Dhaka"
+                className="flex-1"
               />
-              <Button type="submit">Search</Button>
+              <Button type="submit" className="sm:w-auto w-full">
+                Search
+              </Button>
             </div>
             {errors.cityName && (
-              <span className="text-red-600">City name is required</span>
+              <p className="text-sm text-red-600">City name is required</p>
             )}
           </div>
         </form>

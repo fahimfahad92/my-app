@@ -10,6 +10,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { WeatherResponse } from "../types/weather-types";
+import WeatherDetail from "./WeatherDetail";
 
 export default function WeatherCard({
   cityName,
@@ -25,6 +26,7 @@ export default function WeatherCard({
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localDate, setLocalDate] = useState<string>("");
 
   const url =
     `${process.env.NEXT_PUBLIC_WEATHER_API_BASE_URL}` +
@@ -42,6 +44,7 @@ export default function WeatherCard({
       }
       const result: WeatherResponse = await response.json();
       setData(result);
+      setLocalDate(result.location.localtime);
     } catch (err: unknown) {
       console.error("Error fetching data:", err);
       setError((err as Error).message || "Unknown error");
@@ -129,14 +132,9 @@ export default function WeatherCard({
           >
             Refresh
           </Button>
-          <Button
-            variant="default"
-            size="sm"
-            // onClick={togglePopup}
-            className="center"
-          >
-            Details
-          </Button>
+
+          <WeatherDetail cityName={cityName} localDate={localDate} />
+
           <Button
             variant="destructive"
             size="sm"

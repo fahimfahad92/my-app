@@ -33,61 +33,42 @@ export default function WeatherDetail({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+
+    const queryDate = new Date(localDate).toISOString().split("T")[0];
+
+    const url: string =
+      `${process.env.NEXT_PUBLIC_WEATHER_API_BASE_URL}` +
+      `${process.env.NEXT_PUBLIC_WEATHER_API_GET_DETAIL_PATH}` +
+      `${process.env.NEXT_PUBLIC_WEATHER_API_API_KEY}` +
+      `&q=${encodeURIComponent(cityName)}` +
+      "&dt=" +
+      queryDate;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch weather details");
+
+      const result: WeatherDetailResponse = await res.json();
+      setData(result);
+
+      const hourly = result?.forecast?.forecastday[0]?.hour.map((h) => ({
+        hour: h.time,
+        temp: h.temp_c,
+      }));
+
+      setChartData(hourly);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!cityName) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
-      const dateObj = new Date(localDate);
-      const queryDate = dateObj.toISOString().split("T")[0]; // yyyy-mm-dd
-
-      // const params = new URLSearchParams({
-      //   key: process.env.NEXT_PUBLIC_WEATHER_API_API_KEY!,
-      //   q: cityName,
-      //   dt: queryDate,
-      // });
-
-      // var date = new Date(localDate);
-      // var day = date.getDate();
-      // var month = date.getMonth() + 1;
-      // var year = date.getFullYear();
-
-      // const queryDate = year + "-" + month + "-" + day;
-
-      const url: string =
-        `${process.env.NEXT_PUBLIC_WEATHER_API_BASE_URL}` +
-        `${process.env.NEXT_PUBLIC_WEATHER_API_GET_DETAIL_PATH}` +
-        `${process.env.NEXT_PUBLIC_WEATHER_API_API_KEY}` +
-        `&q=${encodeURIComponent(cityName)}` +
-        "&dt=" +
-        queryDate;
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch weather details");
-
-        const result: WeatherDetailResponse = await res.json();
-        setData(result);
-
-        console.log(url);
-
-        const hourly = result.forecast.forecastday[0].hour.map((h) => ({
-          hour: h.time,
-          temp: h.temp_c,
-        }));
-
-        setChartData(hourly);
-      } catch (err) {
-        console.error(err);
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    if (cityName) fetchData();
   }, [cityName, localDate]);
 
   return (
@@ -96,7 +77,7 @@ export default function WeatherDetail({
         <Button>Details</Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="w-full max-w-4xl sm:max-w-2xl md:max-w-3xl max-h-[70vh] overflow-y-auto px-2 sm:px-4">
         {loading ? (
           <div className="text-center p-4">Loading...</div>
         ) : error ? (
@@ -104,14 +85,18 @@ export default function WeatherDetail({
         ) : data ? (
           <>
             <DialogHeader>
-              <DialogTitle>{data.location.name}</DialogTitle>
-              <DialogDescription>{data.location.country}</DialogDescription>
+              <DialogTitle className="text-lg md:text-xl">
+                {data.location.name}
+              </DialogTitle>
+              <DialogDescription className="text-sm md:text-base">
+                {data.location.country}
+              </DialogDescription>
             </DialogHeader>
 
             <Card>
-              <CardContent className="space-y-4 pt-6">
+              <CardContent className="space-y-6 pt-6 px-4 md:px-8">
                 {/* Temperature Info */}
-                <div className="grid sm:grid-cols-2 gap-4 text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center text-sm md:text-base">
                   <div>
                     <Label>Max Temp</Label>
                     <div>{data.forecast.forecastday[0].day.maxtemp_c}°C</div>
@@ -120,18 +105,17 @@ export default function WeatherDetail({
                     <Label>Min Temp</Label>
                     <div>{data.forecast.forecastday[0].day.mintemp_c}°C</div>
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-full">
                     <img
                       src={data.forecast.forecastday[0].day.condition.icon}
                       alt={data.forecast.forecastday[0].day.condition.text}
-                      title={data.forecast.forecastday[0].day.condition.text}
-                      className="mx-auto"
+                      className="mx-auto h-16 w-16"
                     />
                   </div>
                 </div>
 
                 {/* Astro Info */}
-                <div className="grid sm:grid-cols-2 gap-4 text-center">
+                <div className="grid grid-cols-2 gap-4 text-center text-sm md:text-base">
                   <div>
                     <Label>Sunrise</Label>
                     <div>{data.forecast.forecastday[0].astro.sunrise}</div>
@@ -150,7 +134,7 @@ export default function WeatherDetail({
                   </div>
                 </div>
 
-                {/* Line Chart */}
+                {/* Temperature Graph */}
                 <LineChartComponent
                   date={data.location.localtime}
                   chartData={chartData}

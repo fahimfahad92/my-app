@@ -32,14 +32,20 @@ export default function LineChartComponent({
   date,
   chartData,
 }: LineChartComponentProps) {
-  const hasData = chartData && chartData.length > 0;
+  if (!chartData?.length) {
+    return (
+      <div className="text-center text-gray-500 text-sm sm:text-base">
+        No data available.
+      </div>
+    );
+  }
 
   const formatHour = (timeString: string) => {
     const date = new Date(timeString);
     return date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
+      hour12: false,
     });
   };
 
@@ -49,42 +55,50 @@ export default function LineChartComponent({
   }));
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle>Today's Temperature</CardTitle>
-        <CardDescription>{date}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {hasData ? (
-          <ChartContainer config={chartConfig}>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart
-                data={processedData}
-                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="hour"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="temp"
-                  stroke="var(--color-temp)"
-                  strokeWidth={2}
-                  dot={{ fill: "var(--color-temp)", r: 3 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        ) : (
-          <div className="text-center text-gray-500">No data available.</div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="max-w-[95vw] max-h-[70vh]">
+      <div>
+        <Card className="shadow-md">
+          <CardHeader className="px-4 sm:px-6 md:px-8">
+            <CardTitle className="text-base sm:text-lg md:text-xl">
+              Today's Temperature
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              {date}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="px-2 sm:px-4 md:px-6">
+            <div>
+              <ChartContainer config={chartConfig}>
+                <ResponsiveContainer>
+                  <LineChart
+                    data={processedData}
+                    margin={{ top: 10, right: 5, left: 5, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="hour"
+                      tickLine
+                      axisLine
+                      tickMargin={10}
+                      className="text-xs sm:text-sm"
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="temp"
+                      stroke="var(--color-temp, #2563eb)"
+                      strokeWidth={2}
+                      dot={{ fill: "var(--color-temp, #2563eb)", r: 3 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

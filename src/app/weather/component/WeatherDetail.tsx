@@ -17,6 +17,10 @@ import { useEffect, useState } from "react";
 
 import { ListCollapse } from "lucide-react";
 import {
+  WEATHER_API_CONSTANT,
+  WEATHER_API_TYPE,
+} from "../constants/weather-constants";
+import {
   TemperatureDataPoint,
   WeatherDetailResponse,
 } from "../types/weather-types";
@@ -41,9 +45,16 @@ export default function WeatherDetail({
     const queryDate = new Date(localDate).toISOString().split("T")[0];
 
     try {
-      const response = await fetch(
-        `/api/data/weather?cityName=${cityName}&type=DETAILS&queryDate=${queryDate}`
-      );
+      const urlParams = new URLSearchParams({
+        cityName: cityName || "",
+        type: WEATHER_API_TYPE.DETAIL,
+        queryDate: queryDate,
+      });
+      const url = `${
+        WEATHER_API_CONSTANT.BASE_ROUTE_URL
+      }?${urlParams.toString()}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) throw new Error("Failed to fetch");
 

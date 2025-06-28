@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { BookmarkPlus, RefreshCcw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  WEATHER_API_CONSTANT,
+  WEATHER_API_TYPE,
+} from "../constants/weather-constants";
 import { WeatherResponse } from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
 
@@ -32,9 +36,16 @@ export default function WeatherCard({
 
   const fetchData = async () => {
     try {
-      const response = await fetch(
-        `/api/data/weather?cityName=${cityName}&type=OVERVIEW`
-      );
+      const urlParams = new URLSearchParams({
+        cityName: cityName || "",
+        type: WEATHER_API_TYPE.OVERVIEW,
+      });
+
+      const url = `${
+        WEATHER_API_CONSTANT.BASE_ROUTE_URL
+      }?${urlParams.toString()}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) throw new Error("Failed to fetch");
 

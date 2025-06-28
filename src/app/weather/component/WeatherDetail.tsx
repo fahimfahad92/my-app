@@ -40,19 +40,14 @@ export default function WeatherDetail({
 
     const queryDate = new Date(localDate).toISOString().split("T")[0];
 
-    const url: string =
-      `${process.env.NEXT_PUBLIC_WEATHER_API_BASE_URL}` +
-      `${process.env.NEXT_PUBLIC_WEATHER_API_GET_DETAIL_PATH}` +
-      `${process.env.NEXT_PUBLIC_WEATHER_API_API_KEY}` +
-      `&q=${encodeURIComponent(cityName)}` +
-      "&dt=" +
-      queryDate;
-
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch weather details");
+      const response = await fetch(
+        `/api/data/weather?cityName=${cityName}&type=DETAILS&queryDate=${queryDate}`
+      );
 
-      const result: WeatherDetailResponse = await res.json();
+      if (!response.ok) throw new Error("Failed to fetch");
+
+      const result: WeatherDetailResponse = await response.json();
       setData(result);
 
       const hourly = result?.forecast?.forecastday[0]?.hour.map((h) => ({

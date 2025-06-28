@@ -30,24 +30,18 @@ export default function WeatherCard({
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
 
-  const url =
-    `${process.env.NEXT_PUBLIC_WEATHER_API_BASE_URL}` +
-    `${process.env.NEXT_PUBLIC_WEATHER_API_GET_CURRENT_DATA_PATH}` +
-    `${process.env.NEXT_PUBLIC_WEATHER_API_API_KEY}` +
-    `&q=${encodeURIComponent(cityName)}`;
-
-  const fetchData = async (): Promise<void> => {
-    setLoading(true);
+  const fetchData = async () => {
     try {
-      console.log("Weather card API call for " + cityName);
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
+      const response = await fetch(
+        `/api/data/weather?cityName=${cityName}&type=OVERVIEW`
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch");
+
       const result: WeatherResponse = await response.json();
       setData(result);
       setLocalDate(result.location.localtime);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Error fetching data:", err);
       setError((err as Error).message || "Unknown error");
     } finally {

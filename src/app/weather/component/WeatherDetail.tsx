@@ -15,6 +15,7 @@ import {
 import { Label } from "@radix-ui/react-label";
 import { useEffect, useState } from "react";
 
+import { ListCollapse } from "lucide-react";
 import {
   TemperatureDataPoint,
   WeatherDetailResponse,
@@ -74,7 +75,9 @@ export default function WeatherDetail({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Details</Button>
+        <Button>
+          <ListCollapse className="w-4 h-4 mr-2" />
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-4xl sm:max-w-2xl md:max-w-3xl max-h-[70vh] overflow-y-auto px-2 sm:px-4">

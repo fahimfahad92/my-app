@@ -8,7 +8,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { BookmarkPlus, RefreshCcw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { WeatherResponse } from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
 
@@ -66,7 +68,7 @@ export default function WeatherCard({
 
   if (loading) return <p>Loading...</p>;
   if (error) {
-    alert(`Error: ${error}`);
+    toast.error(`Error: ${error}`);
     setError(null);
     removeCity(cityName);
     return null;
@@ -130,7 +132,8 @@ export default function WeatherCard({
             onClick={refreshData}
             className="center"
           >
-            Refresh
+            {/* Refresh */}
+            <RefreshCcw />
           </Button>
 
           <WeatherDetail cityName={cityName} localDate={localDate} />
@@ -141,7 +144,7 @@ export default function WeatherCard({
             onClick={() => removefromWatchList(cityName)}
             className="center"
           >
-            Remove
+            <Trash2 className="w-4 h-4 mr-2" />
           </Button>
           <Button
             variant="default"
@@ -149,7 +152,7 @@ export default function WeatherCard({
             onClick={() => addToWatchList(cityName)}
             className="center"
           >
-            Add To Watch List
+            <BookmarkPlus className="w-4 h-4 mr-2" />
           </Button>
         </CardFooter>
       </Card>

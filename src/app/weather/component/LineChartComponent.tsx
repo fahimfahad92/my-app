@@ -7,11 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import {
   CartesianGrid,
   Line,
@@ -60,7 +56,7 @@ export default function LineChartComponent({
         <Card className="shadow-md">
           <CardHeader className="px-4 sm:px-6 md:px-8">
             <CardTitle className="text-base sm:text-lg md:text-xl">
-              Today's Temperature
+              Today&acute;s Temperature
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               {date}
@@ -83,7 +79,7 @@ export default function LineChartComponent({
                       tickMargin={10}
                       className="text-xs sm:text-sm"
                     />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    {/* <ChartTooltip content={<ChartTooltipContent />} /> */}
                     <Line
                       type="monotone"
                       dataKey="temp"

@@ -6,6 +6,15 @@ export type WeatherCitySearchProps = {
   setCityName: (data: string) => void;
 };
 
+export type CustomDotProps = {
+  cx?: number;
+  cy?: number;
+  payload?: {
+    icon?: string;
+    // [key: string]: any;
+  };
+};
+
 export type TemperatureDataPoint = {
   hour: string;
   temp: number;

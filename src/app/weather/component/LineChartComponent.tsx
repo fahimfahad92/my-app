@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ReactElement } from "react";
 import {
   CartesianGrid,
   Line,
@@ -15,7 +16,10 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import { LineChartComponentProps } from "../types/weather-types";
+import {
+  CustomDotProps,
+  LineChartComponentProps,
+} from "../types/weather-types";
 
 export const chartConfig = {
   temp: {
@@ -24,11 +28,17 @@ export const chartConfig = {
   },
 };
 
-const CustomDot = ({ cx, cy, payload }: any) => {
-  const icon = payload.icon;
+const CustomDot = ({
+  cx = 0,
+  cy = 0,
+  payload,
+}: CustomDotProps): ReactElement | null => {
+  const icon = payload?.icon;
+
   if (!icon) {
-    return;
+    return null;
   }
+
   return (
     <image
       href={icon}

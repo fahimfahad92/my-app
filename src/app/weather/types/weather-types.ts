@@ -9,6 +9,7 @@ export type WeatherCitySearchProps = {
 export type TemperatureDataPoint = {
   hour: string;
   temp: number;
+  icon: string;
 };
 
 export type LineChartComponentProps = {
@@ -116,7 +117,7 @@ export interface Hourly {
   // time_epoch: number;
   // temp_f: number;
   // is_day: 0 | 1;
-  // condition: Condition;
+  condition: Condition;
   // wind_mph: number;
   // wind_kph: number;
   // wind_degree: number;

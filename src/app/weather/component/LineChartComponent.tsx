@@ -7,12 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
   CartesianGrid,
   Line,
   LineChart,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
 } from "recharts";
 import { LineChartComponentProps } from "../types/weather-types";
@@ -22,6 +22,23 @@ export const chartConfig = {
     label: "Temperature (°C)",
     color: "#2563eb",
   },
+};
+
+const CustomDot = ({ cx, cy, payload }: any) => {
+  const icon = payload.icon;
+  if (!icon) {
+    return;
+  }
+  return (
+    <image
+      href={icon}
+      x={cx - 12}
+      y={cy - 12}
+      width={24}
+      height={24}
+      style={{ pointerEvents: "none" }}
+    />
+  );
 };
 
 export default function LineChartComponent({
@@ -41,13 +58,14 @@ export default function LineChartComponent({
     return date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     });
   };
 
   const processedData = chartData.map((item) => ({
     hour: formatHour(item.hour),
     temp: item.temp,
+    icon: item.icon,
   }));
 
   return (
@@ -64,33 +82,43 @@ export default function LineChartComponent({
           </CardHeader>
 
           <CardContent className="px-2 sm:px-4 md:px-6">
-            <div>
-              <ChartContainer config={chartConfig}>
-                <ResponsiveContainer>
-                  <LineChart
-                    data={processedData}
-                    margin={{ top: 10, right: 5, left: 5, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="hour"
-                      tickLine
-                      axisLine
-                      tickMargin={10}
-                      className="text-xs sm:text-sm"
-                    />
-                    <ChartTooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="temp"
-                      stroke="var(--color-temp, #2563eb)"
-                      strokeWidth={2}
-                      dot={{ fill: "var(--color-temp, #2563eb)", r: 3 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+            <div className="w-full h-64">
+              <ResponsiveContainer>
+                <LineChart
+                  data={processedData}
+                  margin={{ top: 10, right: 5, left: 5, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+
+                  <XAxis
+                    dataKey="hour"
+                    tickMargin={20}
+                    className="text-xs sm:text-sm"
+                  />
+
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 rounded shadow text-sm text-gray-800">
+                            <p className="font-medium">{label}</p>
+                            <p>{payload[0].value}°C</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="temp"
+                    stroke="#2563eb"
+                    strokeWidth={2}
+                    dot={<CustomDot />}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>

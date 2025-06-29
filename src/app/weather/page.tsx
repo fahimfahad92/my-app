@@ -22,7 +22,7 @@ export default function WeatherApp() {
   const [cities, setCities] = useState<string[] | []>([]);
 
   useEffect(() => {
-    console.log("initializing cities form local storage");
+    console.log("Initializing cities form local storage");
     setCities(getArrayFromLocalStorage<string>("watchList"));
   }, []);
 
@@ -34,6 +34,7 @@ export default function WeatherApp() {
         return [...prevCities];
       }
       console.log("City updated for " + cityName);
+      toast.success(`Got data for ${cityName}`);
 
       return [...prevCities, normalizedCity];
     });
@@ -46,22 +47,22 @@ export default function WeatherApp() {
     setCities(updatedCities);
   };
 
-  const addToWatchList = (city: string) => {
+  const addToWatchList = (cityName: string) => {
     const watchList = getArrayFromLocalStorage("watchList");
-    if (watchList.includes(city)) {
-      console.log(`${city} is already in the watch list`);
-      toast.error(`${city} is already in the watch list`);
+    if (watchList.includes(cityName)) {
+      console.log(`${cityName} is already in the watch list`);
+      toast.error(`${cityName} is already in the watch list`);
       return;
     }
-    setItemInLocalStorageAsArray("watchList", city);
-    console.log(`${city} added to watch list`);
-    toast.success(`${city} added to watch list`);
+    setItemInLocalStorageAsArray("watchList", cityName);
+    console.log(`${cityName} added to watch list`);
+    toast.success(`${cityName} added to watch list`);
   };
 
-  const removefromWatchList = (city: string) => {
-    removeItemFromLocalStorageArray("watchList", city);
-    removeCity(city);
-    toast.success(`${city} removed`);
+  const removefromWatchList = (cityName: string) => {
+    removeItemFromLocalStorageArray("watchList", cityName);
+    removeCity(cityName);
+    toast.info(`${cityName} removed`);
   };
 
   return (
@@ -105,10 +106,10 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full max-w-7xl">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-7xl">
           {cities.map((city) =>
             city ? (
-              <div key={city} className="flex justify-center">
+              <div key={city}>
                 <WeatherCard
                   cityName={city}
                   removeCity={removeCity}

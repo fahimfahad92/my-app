@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChartContainer } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
   CartesianGrid,
   Line,
@@ -79,7 +79,7 @@ export default function LineChartComponent({
                       tickMargin={10}
                       className="text-xs sm:text-sm"
                     />
-                    {/* <ChartTooltip content={<ChartTooltipContent />} /> */}
+                    <ChartTooltip />
                     <Line
                       type="monotone"
                       dataKey="temp"

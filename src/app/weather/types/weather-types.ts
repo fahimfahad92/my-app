@@ -6,9 +6,19 @@ export type WeatherCitySearchProps = {
   setCityName: (data: string) => void;
 };
 
+export type CustomDotProps = {
+  cx?: number;
+  cy?: number;
+  payload?: {
+    icon?: string;
+    // [key: string]: any;
+  };
+};
+
 export type TemperatureDataPoint = {
   hour: string;
   temp: number;
+  icon: string;
 };
 
 export type LineChartComponentProps = {
@@ -116,7 +126,7 @@ export interface Hourly {
   // time_epoch: number;
   // temp_f: number;
   // is_day: 0 | 1;
-  // condition: Condition;
+  condition: Condition;
   // wind_mph: number;
   // wind_kph: number;
   // wind_degree: number;

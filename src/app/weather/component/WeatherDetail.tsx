@@ -64,6 +64,7 @@ export default function WeatherDetail({
       const hourly = result?.forecast?.forecastday[0]?.hour.map((h) => ({
         hour: h.time,
         temp: h.temp_c,
+        icon: h.condition?.icon,
       }));
 
       setChartData(hourly);

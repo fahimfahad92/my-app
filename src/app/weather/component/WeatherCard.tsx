@@ -69,6 +69,7 @@ export default function WeatherCard({
   const refreshData = () => {
     if (!cityName || cityName == "") return;
     fetchData();
+    toast.info(`Weather data updated for ${cityName}`);
   };
 
   if (loading) return <p>Loading...</p>;

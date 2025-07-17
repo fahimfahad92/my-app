@@ -36,7 +36,7 @@ export default function WeatherApp() {
       console.log("City updated for " + cityName);
       toast.success(`Got data for ${cityName}`);
 
-      return [...prevCities, normalizedCity];
+      return [normalizedCity, ...prevCities];
     });
   }, [cityName]);
 

@@ -23,18 +23,20 @@ export default function WeatherCard({
   removeCity,
   addToWatchList,
   removefromWatchList,
+  fixCity,
 }: {
   cityName: string;
   removeCity: (data: string) => void;
   addToWatchList: (data: string) => void;
   removefromWatchList: (data: string) => void;
+  fixCity: (prevCity: string, updatedCity: string) => void;
 }) {
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
 
-  const fetchData = async () => {
+  const fetchData = async (isUpdate: boolean) => {
     try {
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
@@ -46,12 +48,25 @@ export default function WeatherCard({
       }?${urlParams.toString()}`;
 
       const response = await fetch(url);
+      console.log(response);
 
-      if (!response.ok) throw new Error("Failed to fetch");
+      if (!response.ok) {
+        const error = await response.json();
+        console.log(error);
+        throw new Error(error.message);
+      }
 
       const result: WeatherResponse = await response.json();
       setData(result);
       setLocalDate(result.location.localtime);
+      if (cityName !== result.location.name.toLowerCase()) {
+        fixCity(cityName, result.location.name);
+      }
+      if (isUpdate) {
+        toast.info(`Weather data updated for ${cityName}`);
+      } else {
+        toast.success(`Got data for ${cityName}`);
+      }
     } catch (err) {
       console.error("Error fetching data:", err);
       setError((err as Error).message || "Unknown error");
@@ -65,8 +80,7 @@ export default function WeatherCard({
 
     const getData = async () => {
       setError(null);
-      await fetchData();
-      toast.success(`Got data for ${cityName}`);
+      await fetchData(false);
     };
 
     getData();
@@ -77,8 +91,7 @@ export default function WeatherCard({
 
     const getData = async () => {
       setError(null);
-      await fetchData();
-      toast.info(`Weather data updated for ${cityName}`);
+      await fetchData(true);
     };
 
     getData();

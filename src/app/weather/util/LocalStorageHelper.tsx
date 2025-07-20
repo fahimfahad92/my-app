@@ -8,7 +8,7 @@ function setItemInLocalStorageAsArray<T = unknown>(
   value: T
 ): void {
   const itemsArray = getArrayFromLocalStorage<T>(key);
-  localStorage.setItem(key, JSON.stringify([...itemsArray, value]));
+  localStorage.setItem(key, JSON.stringify([value, ...itemsArray]));
 }
 
 function removeItemFromLocalStorageArray<T = unknown>(

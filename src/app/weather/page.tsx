@@ -31,6 +31,7 @@ export default function WeatherApp() {
       const normalizedCity = cityName.toLowerCase();
 
       if (prevCities.includes(normalizedCity) || cityName === "") {
+        toast.info(`${cityName} is already shown below`);
         return [...prevCities];
       }
       console.log("City updated for " + cityName);
@@ -62,6 +63,21 @@ export default function WeatherApp() {
     removeItemFromLocalStorageArray("watchList", cityName);
     removeCity(cityName);
     toast.info(`${cityName} removed`);
+  };
+
+  const fixCity = (prevCity: string, updatedCity: string) => {
+    removeCity(prevCity);
+    setCityName(updatedCity);
+    setCities((prevCities: string[]) => {
+      const normalizedCity = updatedCity.toLowerCase();
+
+      if (prevCities.includes(normalizedCity) || cityName === "") {
+        return [...prevCities];
+      }
+      console.log("City updated for " + cityName);
+
+      return [normalizedCity, ...prevCities];
+    });
   };
 
   return (
@@ -114,6 +130,7 @@ export default function WeatherApp() {
                   removeCity={removeCity}
                   addToWatchList={addToWatchList}
                   removefromWatchList={removefromWatchList}
+                  fixCity={fixCity}
                 />
               </div>
             ) : null

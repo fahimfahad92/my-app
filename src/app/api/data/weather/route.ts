@@ -58,13 +58,19 @@ export async function GET(request: NextRequest) {
 
     if (!res.ok) {
       const errorResponse: ErrorResponse = await res.json();
-      throw new Error(errorResponse.error.message);
+      throw new Error(errorResponse.error?.message);
     }
 
     const data = await res.json();
     return Response.json(data);
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: error }, { status: 500 });
+    console.error("server error " + error);
+    const errRes = Response.json(
+      {
+        error: (error as Error).message || "An unexpected error occurred",
+      },
+      { status: 500 }
+    );
+    return errRes;
   }
 }

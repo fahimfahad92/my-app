@@ -32,7 +32,7 @@ export default function WeatherCard({
   fixCity: (prevCity: string, updatedCity: string) => void;
 }) {
   const [data, setData] = useState<WeatherResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
 
@@ -48,12 +48,10 @@ export default function WeatherCard({
       }?${urlParams.toString()}`;
 
       const response = await fetch(url);
-      console.log(response);
 
       if (!response.ok) {
-        const error = await response.json();
-        console.log(error);
-        throw new Error(error.message);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Something went wrong");
       }
 
       const result: WeatherResponse = await response.json();
@@ -68,7 +66,7 @@ export default function WeatherCard({
         toast.success(`Got data for ${cityName}`);
       }
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error("Error fetching data:", (err as Error).message);
       setError((err as Error).message || "Unknown error");
     } finally {
       setLoading(false);

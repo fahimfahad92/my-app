@@ -35,6 +35,7 @@ export default function WeatherCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
+  const [isHighlighted, setIsHighlighted] = useState(false);
 
   const fetchData = async (isUpdate: boolean) => {
     try {
@@ -77,6 +78,10 @@ export default function WeatherCard({
     if (!cityName) return;
     setError(null);
     fetchData(false);
+
+    setIsHighlighted(true); // Highlight on mount/update
+    const timer = setTimeout(() => setIsHighlighted(false), 2000); // Remove after 2s
+    return () => clearTimeout(timer);
   }, [cityName]);
 
   const refreshData = () => {
@@ -95,7 +100,13 @@ export default function WeatherCard({
   if (!data) return null;
 
   return (
-    <div className="flex justify-center p-6 bg-gray-50">
+    <div
+      className={`flex justify-center p-6 transition-all ${
+        isHighlighted
+          ? "font-bold scale-[1.02] bg-blue-200 rounded-2xl" // Highlighted
+          : "bg-gray-50" // Normal
+      }`}
+    >
       <Card className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-2xl shadow-md border border-gray-200 bg-white">
         <CardHeader className="flex flex-col items-center text-center space-y-2">
           <CardTitle className="text-xl font-semibold text-gray-800">

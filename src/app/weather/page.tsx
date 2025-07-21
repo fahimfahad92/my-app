@@ -124,7 +124,7 @@ export default function WeatherApp() {
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-7xl">
           {cities.map((city) =>
             city ? (
-              <div key={city}>
+              <div key={city} className="p-2">
                 <WeatherCard
                   cityName={city}
                   removeCity={removeCity}

@@ -162,3 +162,10 @@ export interface Condition {
   icon: string;
   code: number;
 }
+
+export type ErrorResponse = {
+  error: {
+    code: number;
+    message: string;
+  };
+};

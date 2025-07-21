@@ -23,18 +23,20 @@ export default function WeatherCard({
   removeCity,
   addToWatchList,
   removefromWatchList,
+  fixCity,
 }: {
   cityName: string;
   removeCity: (data: string) => void;
   addToWatchList: (data: string) => void;
   removefromWatchList: (data: string) => void;
+  fixCity: (prevCity: string, updatedCity: string) => void;
 }) {
   const [data, setData] = useState<WeatherResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
 
-  const fetchData = async () => {
+  const fetchData = async (isUpdate: boolean) => {
     try {
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
@@ -47,13 +49,24 @@ export default function WeatherCard({
 
       const response = await fetch(url);
 
-      if (!response.ok) throw new Error("Failed to fetch");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Something went wrong");
+      }
 
       const result: WeatherResponse = await response.json();
       setData(result);
       setLocalDate(result.location.localtime);
+      if (cityName !== result.location.name.toLowerCase()) {
+        fixCity(cityName, result.location.name);
+      }
+      if (isUpdate) {
+        toast.info(`Weather data updated for ${cityName}`);
+      } else {
+        toast.success(`Got data for ${cityName}`);
+      }
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error("Error fetching data:", (err as Error).message);
       setError((err as Error).message || "Unknown error");
     } finally {
       setLoading(false);
@@ -63,13 +76,13 @@ export default function WeatherCard({
   useEffect(() => {
     if (!cityName) return;
     setError(null);
-    fetchData();
+    fetchData(false);
   }, [cityName]);
 
   const refreshData = () => {
     if (!cityName || cityName == "") return;
-    fetchData();
-    toast.info(`Weather data updated for ${cityName}`);
+    setError(null);
+    fetchData(true);
   };
 
   if (loading) return <p>Loading...</p>;

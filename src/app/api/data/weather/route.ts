@@ -4,6 +4,7 @@ import {
   WEATHER_ERROR_MESSAGES,
   WEATHER_SEARCH_PARAMS,
 } from "@/app/weather/constants/weather-constants";
+import { ErrorResponse } from "@/app/weather/types/weather-types";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -56,16 +57,20 @@ export async function GET(request: NextRequest) {
     const res = await fetch(url);
 
     if (!res.ok) {
-      throw new Error(`Weather API responded with ${res.status}`);
+      const errorResponse: ErrorResponse = await res.json();
+      throw new Error(errorResponse.error?.message);
     }
 
     const data = await res.json();
     return Response.json(data);
   } catch (error) {
-    console.error("Weather API fetch error:", error);
-    return Response.json(
-      { error: "Failed to fetch weather data" },
+    console.error("server error " + error);
+    const errRes = Response.json(
+      {
+        error: (error as Error).message || "An unexpected error occurred",
+      },
       { status: 500 }
     );
+    return errRes;
   }
 }

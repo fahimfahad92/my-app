@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Calendar, CloudSun, ListTodo, Rss } from "lucide-react";
+import { CloudSun } from "lucide-react";
 
 const features = [
   {
@@ -11,24 +11,24 @@ const features = [
     href: "/weather",
     icon: <CloudSun className="w-8 h-8 text-blue-500" />,
   },
-  {
-    title: "To-Do List",
-    description: "Organize your tasks and stay productive every day.",
-    href: "/todo",
-    icon: <ListTodo className="w-8 h-8 text-green-500" />,
-  },
-  {
-    title: "RSS Feed Manager",
-    description: "Subscribe to and manage RSS feeds in one place.",
-    href: "/rss",
-    icon: <Rss className="w-8 h-8 text-orange-500" />,
-  },
-  {
-    title: "Important Dates",
-    description: "Track birthdays, events, and special reminders easily.",
-    href: "/dates",
-    icon: <Calendar className="w-8 h-8 text-purple-500" />,
-  },
+  // {
+  //   title: "To-Do List",
+  //   description: "Organize your tasks and stay productive every day.",
+  //   href: "/todo",
+  //   icon: <ListTodo className="w-8 h-8 text-green-500" />,
+  // },
+  // {
+  //   title: "RSS Feed Manager",
+  //   description: "Subscribe to and manage RSS feeds in one place.",
+  //   href: "/rss",
+  //   icon: <Rss className="w-8 h-8 text-orange-500" />,
+  // },
+  // {
+  //   title: "Important Dates",
+  //   description: "Track birthdays, events, and special reminders easily.",
+  //   href: "/dates",
+  //   icon: <Calendar className="w-8 h-8 text-purple-500" />,
+  // },
 ];
 
 export default function Home() {

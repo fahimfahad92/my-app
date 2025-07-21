@@ -75,24 +75,14 @@ export default function WeatherCard({
 
   useEffect(() => {
     if (!cityName) return;
-
-    const getData = async () => {
-      setError(null);
-      await fetchData(false);
-    };
-
-    getData();
+    setError(null);
+    fetchData(false);
   }, [cityName]);
 
   const refreshData = () => {
     if (!cityName || cityName == "") return;
-
-    const getData = async () => {
-      setError(null);
-      await fetchData(true);
-    };
-
-    getData();
+    setError(null);
+    fetchData(true);
   };
 
   if (loading) return <p>Loading...</p>;

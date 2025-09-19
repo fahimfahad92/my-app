@@ -19,7 +19,11 @@ export default function WeatherApp() {
 
   useEffect(() => {
     console.log("Initializing cities form local storage");
-    setCities(getArrayFromLocalStorage<string>("watchList"));
+    const stored = getArrayFromLocalStorage<string>("watchList");
+    const normalized = Array.from(
+      new Set((stored || []).map((c) => c?.trim().toLowerCase()).filter(Boolean))
+    );
+    setCities(normalized);
   }, []);
   
   useEffect(() => {
@@ -27,16 +31,15 @@ export default function WeatherApp() {
     if (!normalizedCity) return;
     
     setCities((prevCities: string[]) => {
-      
       if (prevCities.includes(normalizedCity)) {
         toast.info(`${cityName} is already shown below`);
         return [...prevCities];
       }
       console.log("City updated for " + cityName);
-      setCityName("");
       
       return [normalizedCity, ...prevCities];
     });
+    setCityName("");
   }, [cityName]);
 
   const removeCity = (cityName: string) => {
@@ -47,35 +50,40 @@ export default function WeatherApp() {
   };
 
   const addToWatchList = (cityName: string) => {
-    const watchList = getArrayFromLocalStorage("watchList");
-    if (watchList.includes(cityName)) {
+    const normalized = cityName.trim().toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    const watchList = getArrayFromLocalStorage("watchList").map((c: string) => c.trim().toLowerCase());
+    if (watchList.includes(normalized)) {
       console.log(`${cityName} is already in the watch list`);
       toast.error(`${cityName} is already in the watch list`);
       return;
     }
-    setItemInLocalStorageAsArray("watchList", cityName);
+    setItemInLocalStorageAsArray("watchList", normalized);
     console.log(`${cityName} added to watch list`);
     toast.success(`${cityName} added to watch list`);
   };
 
   const removefromWatchList = (cityName: string) => {
-    removeItemFromLocalStorageArray("watchList", cityName);
-    removeCity(cityName);
+    const normalized = cityName.trim().toLowerCase();
+    removeItemFromLocalStorageArray("watchList", normalized);
+    removeCity(normalized);
     toast.info(`${cityName} removed`);
   };
 
   const fixCity = (prevCity: string, updatedCity: string) => {
-    removeCity(prevCity);
-    setCityName(updatedCity);
+    const prev = prevCity.trim().toLowerCase();
+    const normalizedCity = updatedCity.trim().toLowerCase();
+    if (!normalizedCity) return;
+
     setCities((prevCities: string[]) => {
-      const normalizedCity = updatedCity.toLowerCase();
-      
-      if (prevCities.includes(normalizedCity) || updatedCity === "") {
-        return [...prevCities];
+      const withoutPrev = prevCities.filter((c) => c !== prev);
+      if (withoutPrev.includes(normalizedCity)) {
+        // If the corrected city already exists, just remove the previous entry
+        return withoutPrev;
       }
       console.log("City updated for " + updatedCity);
-
-      return [normalizedCity, ...prevCities];
+      return [normalizedCity, ...withoutPrev];
     });
   };
 

@@ -82,7 +82,7 @@ export default function WeatherDetail({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
+        <Button aria-label="Show weather details" title="Show weather details">
           <ListCollapse className="w-4 h-4 mr-2" />
         </Button>
       </DialogTrigger>

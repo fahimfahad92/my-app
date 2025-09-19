@@ -84,6 +84,13 @@ export default function WeatherCard({
     return () => clearTimeout(timer);
   }, [cityName]);
 
+  // Move side-effects out of render: handle error via effect
+  useEffect(() => {
+    if (!error) return;
+    toast.error(`Error: ${error}`);
+    removeCity(cityName);
+  }, [error, cityName, removeCity]);
+
   const refreshData = () => {
     if (!cityName || cityName == "") return;
     setError(null);
@@ -92,9 +99,6 @@ export default function WeatherCard({
 
   if (loading) return <p>Loading...</p>;
   if (error) {
-    toast.error(`Error: ${error}`);
-    setError(null);
-    removeCity(cityName);
     return null;
   }
   if (!data) return null;
@@ -161,6 +165,8 @@ export default function WeatherCard({
             size="sm"
             onClick={refreshData}
             className="center"
+            aria-label="Refresh weather data"
+            title="Refresh weather data"
           >
             {/* Refresh */}
             <RefreshCcw />
@@ -173,6 +179,8 @@ export default function WeatherCard({
             size="sm"
             onClick={() => removefromWatchList(cityName)}
             className="center"
+            aria-label="Remove city from watch list"
+            title="Remove city from watch list"
           >
             <Trash2 className="w-4 h-4 mr-2" />
           </Button>
@@ -181,6 +189,8 @@ export default function WeatherCard({
             size="sm"
             onClick={() => addToWatchList(cityName)}
             className="center"
+            aria-label="Add city to watch list"
+            title="Add city to watch list"
           >
             <BookmarkPlus className="w-4 h-4 mr-2" />
           </Button>

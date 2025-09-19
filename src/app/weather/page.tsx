@@ -6,9 +6,9 @@ import {toast} from "sonner";
 import WeatherCard from "./component/WeatherCard";
 import WeatherCitySearchForm from "./component/WeatherCitySearchForm";
 import {
-    getArrayFromLocalStorage,
-    removeItemFromLocalStorageArray,
-    setItemInLocalStorageAsArray,
+  getArrayFromLocalStorage,
+  removeItemFromLocalStorageArray,
+  setItemInLocalStorageAsArray,
 } from "./util/LocalStorageHelper";
 import HomeComponent from "@/app/weather/component/HomeComponent";
 
@@ -21,17 +21,20 @@ export default function WeatherApp() {
     console.log("Initializing cities form local storage");
     setCities(getArrayFromLocalStorage<string>("watchList"));
   }, []);
-
+  
   useEffect(() => {
+    const normalizedCity = cityName.trim().toLowerCase();
+    if (!normalizedCity) return;
+    
     setCities((prevCities: string[]) => {
-      const normalizedCity = cityName.toLowerCase();
-
-      if (prevCities.includes(normalizedCity) || cityName === "") {
+      
+      if (prevCities.includes(normalizedCity)) {
         toast.info(`${cityName} is already shown below`);
         return [...prevCities];
       }
       console.log("City updated for " + cityName);
-
+      setCityName("");
+      
       return [normalizedCity, ...prevCities];
     });
   }, [cityName]);
@@ -66,11 +69,11 @@ export default function WeatherApp() {
     setCityName(updatedCity);
     setCities((prevCities: string[]) => {
       const normalizedCity = updatedCity.toLowerCase();
-
-      if (prevCities.includes(normalizedCity) || cityName === "") {
+      
+      if (prevCities.includes(normalizedCity) || updatedCity === "") {
         return [...prevCities];
       }
-      console.log("City updated for " + cityName);
+      console.log("City updated for " + updatedCity);
 
       return [normalizedCity, ...prevCities];
     });

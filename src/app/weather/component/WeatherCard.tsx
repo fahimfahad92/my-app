@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { BookmarkPlus, RefreshCcw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   WEATHER_API_CONSTANT,
@@ -18,7 +17,16 @@ import {
 import { WeatherResponse } from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
 
-export default function WeatherCard({
+import { memo, useEffect, useState } from "react";
+import {CardSkeleton} from "@/app/weather/component/Skeletons";
+import {getArrayFromLocalStorage} from "@/app/weather/util/LocalStorageHelper";
+import {logger} from "@/app/weather/util/logger";
+
+// Simple in-memory cache with TTL for weather overview requests
+const WEATHER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const overviewCache = new Map<string, { data: WeatherResponse; ts: number }>();
+
+function WeatherCard({
   cityName,
   removeCity,
   addToWatchList,
@@ -36,9 +44,22 @@ export default function WeatherCard({
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
   const [isHighlighted, setIsHighlighted] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const fetchData = async (isUpdate: boolean) => {
     try {
+      const cacheKey = cityName.trim().toLowerCase();
+      if (!isUpdate) {
+        const cached = overviewCache.get(cacheKey);
+        if (cached && Date.now() - cached.ts < WEATHER_CACHE_TTL_MS) {
+          setData(cached.data);
+          setLocalDate(cached.data.location.localtime);
+          setLoading(false);
+          toast.success(`Loaded cached data for ${cityName}`);
+          return;
+        }
+      }
+
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
         type: WEATHER_API_TYPE.OVERVIEW,
@@ -58,6 +79,11 @@ export default function WeatherCard({
       const result: WeatherResponse = await response.json();
       setData(result);
       setLocalDate(result.location.localtime);
+      // update cache
+      overviewCache.set(cityName.trim().toLowerCase(), {
+        data: result,
+        ts: Date.now(),
+      });
       if (cityName !== result.location.name.toLowerCase()) {
         fixCity(cityName, result.location.name);
       }
@@ -67,22 +93,34 @@ export default function WeatherCard({
         toast.success(`Got data for ${cityName}`);
       }
     } catch (err) {
-      console.error("Error fetching data:", (err as Error).message);
+      logger.error("Error fetching data:", (err as Error).message);
       setError((err as Error).message || "Unknown error");
     } finally {
       setLoading(false);
     }
   };
 
+
   useEffect(() => {
     if (!cityName) return;
     setError(null);
     fetchData(false);
 
+    // reflect watch list state
+    const watch = getArrayFromLocalStorage<string>("watchList").map((c) => c?.trim().toLowerCase());
+    setIsSaved(watch.includes(cityName.trim().toLowerCase()));
+
     setIsHighlighted(true); // Highlight on mount/update
     const timer = setTimeout(() => setIsHighlighted(false), 2000); // Remove after 2s
     return () => clearTimeout(timer);
   }, [cityName]);
+
+  // Move side-effects out of render: handle error via effect
+  useEffect(() => {
+    if (!error) return;
+    toast.error(`Error: ${error}`);
+    removeCity(cityName);
+  }, [error, cityName, removeCity]);
 
   const refreshData = () => {
     if (!cityName || cityName == "") return;
@@ -90,11 +128,8 @@ export default function WeatherCard({
     fetchData(true);
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <CardSkeleton />;
   if (error) {
-    toast.error(`Error: ${error}`);
-    setError(null);
-    removeCity(cityName);
     return null;
   }
   if (!data) return null;
@@ -161,6 +196,8 @@ export default function WeatherCard({
             size="sm"
             onClick={refreshData}
             className="center"
+            aria-label="Refresh weather data"
+            title="Refresh weather data"
           >
             {/* Refresh */}
             <RefreshCcw />
@@ -173,14 +210,24 @@ export default function WeatherCard({
             size="sm"
             onClick={() => removefromWatchList(cityName)}
             className="center"
+            aria-label="Remove city from watch list"
+            title="Remove city from watch list"
           >
             <Trash2 className="w-4 h-4 mr-2" />
           </Button>
           <Button
-            variant="default"
+            variant={isSaved ? "secondary" : "default"}
             size="sm"
-            onClick={() => addToWatchList(cityName)}
+            onClick={() => {
+              if (!isSaved) {
+                addToWatchList(cityName);
+                setIsSaved(true);
+              }
+            }}
             className="center"
+            aria-label={isSaved ? "Already in watch list" : "Add city to watch list"}
+            title={isSaved ? "Already in watch list" : "Add city to watch list"}
+            disabled={isSaved}
           >
             <BookmarkPlus className="w-4 h-4 mr-2" />
           </Button>
@@ -189,3 +236,5 @@ export default function WeatherCard({
     </div>
   );
 }
+
+export default memo(WeatherCard);

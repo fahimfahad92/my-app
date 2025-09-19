@@ -1,7 +1,7 @@
 "use client";
 
 import {BookmarkPlus, Info, ListCollapse, RefreshCcw, Trash2,} from "lucide-react";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {toast} from "sonner";
 import WeatherCard from "./component/WeatherCard";
 import WeatherCitySearchForm from "./component/WeatherCitySearchForm";
@@ -11,6 +11,7 @@ import {
   setItemInLocalStorageAsArray,
 } from "./util/LocalStorageHelper";
 import HomeComponent from "@/app/weather/component/HomeComponent";
+import { logger } from "./util/logger";
 
 
 export default function WeatherApp() {
@@ -18,8 +19,12 @@ export default function WeatherApp() {
   const [cities, setCities] = useState<string[] | []>([]);
 
   useEffect(() => {
-    console.log("Initializing cities form local storage");
-    setCities(getArrayFromLocalStorage<string>("watchList"));
+    logger.info("Initializing cities from local storage");
+    const stored = getArrayFromLocalStorage<string>("watchList");
+    const normalized = Array.from(
+      new Set((stored || []).map((c) => c?.trim().toLowerCase()).filter(Boolean))
+    );
+    setCities(normalized);
   }, []);
   
   useEffect(() => {
@@ -27,57 +32,58 @@ export default function WeatherApp() {
     if (!normalizedCity) return;
     
     setCities((prevCities: string[]) => {
-      
       if (prevCities.includes(normalizedCity)) {
         toast.info(`${cityName} is already shown below`);
         return [...prevCities];
       }
-      console.log("City updated for " + cityName);
-      setCityName("");
+      logger.info("City updated for " + cityName);
       
       return [normalizedCity, ...prevCities];
     });
+    setCityName("");
   }, [cityName]);
 
-  const removeCity = (cityName: string) => {
-    const updatedCities = cities.filter(function (currentLocation) {
-      return currentLocation !== cityName;
-    });
-    setCities(updatedCities);
-  };
+  const removeCity = useCallback((cityName: string) => {
+    setCities((prev) => prev.filter((currentLocation) => currentLocation !== cityName));
+  }, []);
 
-  const addToWatchList = (cityName: string) => {
-    const watchList = getArrayFromLocalStorage("watchList");
-    if (watchList.includes(cityName)) {
-      console.log(`${cityName} is already in the watch list`);
+  const addToWatchList = useCallback((cityName: string) => {
+    const normalized = cityName.trim().toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    const watchList = getArrayFromLocalStorage("watchList").map((c: string) => c.trim().toLowerCase());
+    if (watchList.includes(normalized)) {
+      logger.info(`${cityName} is already in the watch list`);
       toast.error(`${cityName} is already in the watch list`);
       return;
     }
-    setItemInLocalStorageAsArray("watchList", cityName);
-    console.log(`${cityName} added to watch list`);
+    setItemInLocalStorageAsArray("watchList", normalized);
+    logger.info(`${cityName} added to watch list`);
     toast.success(`${cityName} added to watch list`);
-  };
+  }, []);
 
-  const removefromWatchList = (cityName: string) => {
-    removeItemFromLocalStorageArray("watchList", cityName);
-    removeCity(cityName);
+  const removefromWatchList = useCallback((cityName: string) => {
+    const normalized = cityName.trim().toLowerCase();
+    removeItemFromLocalStorageArray("watchList", normalized);
+    removeCity(normalized);
     toast.info(`${cityName} removed`);
-  };
+  }, [removeCity]);
 
-  const fixCity = (prevCity: string, updatedCity: string) => {
-    removeCity(prevCity);
-    setCityName(updatedCity);
+  const fixCity = useCallback((prevCity: string, updatedCity: string) => {
+    const prev = prevCity.trim().toLowerCase();
+    const normalizedCity = updatedCity.trim().toLowerCase();
+    if (!normalizedCity) return;
+
     setCities((prevCities: string[]) => {
-      const normalizedCity = updatedCity.toLowerCase();
-      
-      if (prevCities.includes(normalizedCity) || updatedCity === "") {
-        return [...prevCities];
+      const withoutPrev = prevCities.filter((c) => c !== prev);
+      if (withoutPrev.includes(normalizedCity)) {
+        // If the corrected city already exists, just remove the previous entry
+        return withoutPrev;
       }
       console.log("City updated for " + updatedCity);
-
-      return [normalizedCity, ...prevCities];
+      return [normalizedCity, ...withoutPrev];
     });
-  };
+  }, []);
 
   return (
     <>
@@ -94,9 +100,11 @@ export default function WeatherApp() {
 
                 {/* Info Tooltip */}
                 <div className="relative group ml-4">
-                    <Info className="w-5 h-5 text-gray-500 hover:text-blue-500 cursor-pointer"/>
+                    <Info className="w-5 h-5 text-gray-500 hover:text-blue-500 cursor-pointer" aria-describedby="weather-icons-tip" aria-label="Weather card icon legend"/>
 
                     <div
+                        id="weather-icons-tip"
+                        role="tooltip"
                         className="absolute right-0 top-full mt-2 w-72 p-4 bg-white border border-gray-200 rounded-md shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 z-50 space-y-2">
                         <p className="text-sm text-gray-800 font-medium mb-1">
                             What the icons mean:

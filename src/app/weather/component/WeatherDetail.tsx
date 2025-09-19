@@ -25,6 +25,8 @@ import {
   WeatherDetailResponse,
 } from "../types/weather-types";
 import LineChartComponent from "./LineChartComponent";
+import { DetailSkeleton } from "./Skeletons";
+import { logger } from "../util/logger";
 
 export default function WeatherDetail({
   cityName,
@@ -42,7 +44,10 @@ export default function WeatherDetail({
     setLoading(true);
     setError(null);
 
-    const queryDate = new Date(localDate).toISOString().split("T")[0];
+    // Prefer parsing the YYYY-MM-DD portion from localDate to avoid timezone shifts
+    const queryDate = (localDate && localDate.includes(" ")
+      ? localDate.split(" ")[0]
+      : new Date(localDate).toISOString().split("T")[0]);
 
     try {
       const urlParams = new URLSearchParams({
@@ -69,6 +74,7 @@ export default function WeatherDetail({
 
       setChartData(hourly);
     } catch (err) {
+      logger.error("Error fetching detail:", (err as Error).message);
       setError((err as Error).message);
     } finally {
       setLoading(false);
@@ -82,14 +88,14 @@ export default function WeatherDetail({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
+        <Button aria-label="Show weather details" title="Show weather details">
           <ListCollapse className="w-4 h-4 mr-2" />
         </Button>
       </DialogTrigger>
 
       <DialogContent className="w-full max-w-4xl sm:max-w-2xl md:max-w-3xl max-h-[70vh] overflow-y-auto px-2 sm:px-4">
         {loading ? (
-          <div className="text-center p-4">Loading...</div>
+          <DetailSkeleton />
         ) : error ? (
           <div className="text-red-500 text-center p-4">Error: {error}</div>
         ) : data ? (

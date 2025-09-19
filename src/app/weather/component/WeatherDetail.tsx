@@ -42,7 +42,10 @@ export default function WeatherDetail({
     setLoading(true);
     setError(null);
 
-    const queryDate = new Date(localDate).toISOString().split("T")[0];
+    // Prefer parsing the YYYY-MM-DD portion from localDate to avoid timezone shifts
+    const queryDate = (localDate && localDate.includes(" ")
+      ? localDate.split(" ")[0]
+      : new Date(localDate).toISOString().split("T")[0]);
 
     try {
       const urlParams = new URLSearchParams({

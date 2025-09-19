@@ -1,7 +1,7 @@
 "use client";
 
 import {BookmarkPlus, Info, ListCollapse, RefreshCcw, Trash2,} from "lucide-react";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {toast} from "sonner";
 import WeatherCard from "./component/WeatherCard";
 import WeatherCitySearchForm from "./component/WeatherCitySearchForm";
@@ -42,14 +42,11 @@ export default function WeatherApp() {
     setCityName("");
   }, [cityName]);
 
-  const removeCity = (cityName: string) => {
-    const updatedCities = cities.filter(function (currentLocation) {
-      return currentLocation !== cityName;
-    });
-    setCities(updatedCities);
-  };
+  const removeCity = useCallback((cityName: string) => {
+    setCities((prev) => prev.filter((currentLocation) => currentLocation !== cityName));
+  }, []);
 
-  const addToWatchList = (cityName: string) => {
+  const addToWatchList = useCallback((cityName: string) => {
     const normalized = cityName.trim().toLowerCase();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
@@ -62,16 +59,16 @@ export default function WeatherApp() {
     setItemInLocalStorageAsArray("watchList", normalized);
     console.log(`${cityName} added to watch list`);
     toast.success(`${cityName} added to watch list`);
-  };
+  }, []);
 
-  const removefromWatchList = (cityName: string) => {
+  const removefromWatchList = useCallback((cityName: string) => {
     const normalized = cityName.trim().toLowerCase();
     removeItemFromLocalStorageArray("watchList", normalized);
     removeCity(normalized);
     toast.info(`${cityName} removed`);
-  };
+  }, [removeCity]);
 
-  const fixCity = (prevCity: string, updatedCity: string) => {
+  const fixCity = useCallback((prevCity: string, updatedCity: string) => {
     const prev = prevCity.trim().toLowerCase();
     const normalizedCity = updatedCity.trim().toLowerCase();
     if (!normalizedCity) return;
@@ -85,7 +82,7 @@ export default function WeatherApp() {
       console.log("City updated for " + updatedCity);
       return [normalizedCity, ...withoutPrev];
     });
-  };
+  }, []);
 
   return (
     <>

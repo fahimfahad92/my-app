@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
 import { useForm } from "react-hook-form";
+import { useRef, useState } from "react";
 import {
   WeatherCitySearchFormProps,
   WeatherCitySearchProps,
@@ -18,10 +19,22 @@ export default function WeatherCitySearchForm({
     formState: { errors },
   } = useForm<WeatherCitySearchFormProps>();
 
+  const debounceRef = useRef<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
   const onSubmit = (data: WeatherCitySearchFormProps) => {
-    console.log(`Searched city ${data.cityName}`);
-    setCityName(data.cityName);
-    reset();
+    const val = data.cityName?.trim();
+    if (!val) return;
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+    }
+    setSubmitting(true);
+    debounceRef.current = window.setTimeout(() => {
+      console.log(`Searched city ${val}`);
+      setCityName(val);
+      setSubmitting(false);
+      reset();
+    }, 400);
   };
 
   return (
@@ -42,8 +55,8 @@ export default function WeatherCitySearchForm({
                 placeholder="e.g. Dhaka"
                 className="flex-1"
               />
-              <Button type="submit" className="sm:w-auto w-full">
-                Search
+              <Button type="submit" className="sm:w-auto w-full" disabled={submitting} aria-busy={submitting}>
+                {submitting ? "Searching..." : "Search"}
               </Button>
             </div>
             {errors.cityName && (

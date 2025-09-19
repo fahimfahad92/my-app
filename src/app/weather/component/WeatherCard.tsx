@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { BookmarkPlus, RefreshCcw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   WEATHER_API_CONSTANT,
@@ -18,7 +17,13 @@ import {
 import { WeatherResponse } from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
 
-export default function WeatherCard({
+import { memo, useEffect, useState } from "react";
+
+// Simple in-memory cache with TTL for weather overview requests
+const WEATHER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const overviewCache = new Map<string, { data: WeatherResponse; ts: number }>();
+
+function WeatherCard({
   cityName,
   removeCity,
   addToWatchList,
@@ -39,6 +44,18 @@ export default function WeatherCard({
 
   const fetchData = async (isUpdate: boolean) => {
     try {
+      const cacheKey = cityName.trim().toLowerCase();
+      if (!isUpdate) {
+        const cached = overviewCache.get(cacheKey);
+        if (cached && Date.now() - cached.ts < WEATHER_CACHE_TTL_MS) {
+          setData(cached.data);
+          setLocalDate(cached.data.location.localtime);
+          setLoading(false);
+          toast.success(`Loaded cached data for ${cityName}`);
+          return;
+        }
+      }
+
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
         type: WEATHER_API_TYPE.OVERVIEW,
@@ -58,6 +75,11 @@ export default function WeatherCard({
       const result: WeatherResponse = await response.json();
       setData(result);
       setLocalDate(result.location.localtime);
+      // update cache
+      overviewCache.set(cityName.trim().toLowerCase(), {
+        data: result,
+        ts: Date.now(),
+      });
       if (cityName !== result.location.name.toLowerCase()) {
         fixCity(cityName, result.location.name);
       }
@@ -73,6 +95,7 @@ export default function WeatherCard({
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (!cityName) return;
@@ -199,3 +222,5 @@ export default function WeatherCard({
     </div>
   );
 }
+
+export default memo(WeatherCard);

@@ -19,6 +19,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Basic input validation for city name (letters, spaces, hyphens, periods), 1-64 chars
+  const isValidCity = /^[a-zA-Z\s\-\.]{1,64}$/.test(cityName);
+  if (!isValidCity) {
+    return Response.json(
+      { error: "Invalid city name. Use letters, spaces, hyphens, and periods only." },
+      { status: 400 }
+    );
+  }
+
   // Validate environment variables
   const BASE_URL = WEATHER_API_PATHS.BASE_URL;
   const API_KEY = WEATHER_API_PATHS.API_KEY;
@@ -53,12 +62,18 @@ export async function GET(request: NextRequest) {
       )}&dt=${queryDate}`;
     }
 
-    // Fetch and return weather data
-    const res = await fetch(url);
+    // Fetch and return weather data with ISR revalidation
+    const res = await fetch(url, { next: { revalidate: 300 } });
 
     if (!res.ok) {
       const errorResponse: ErrorResponse = await res.json();
-      throw new Error(errorResponse.error?.message);
+      const code = (errorResponse as ErrorResponse)?.error?.code;
+      // Map known WeatherAPI error codes to friendly messages
+      let friendly = (errorResponse as ErrorResponse)?.error?.message || "An error occurred";
+      if (code === 1006) friendly = "No matching location found";
+      if (code === 2006) friendly = "API key is invalid or missing";
+      if (code === 9999) friendly = "Weather service temporary error. Please try again.";
+      throw new Error(friendly);
     }
 
     const data = await res.json();

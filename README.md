@@ -1,38 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# My App – Weather Feature
+
+A Next.js 15 (App Router) project using React 19, Tailwind CSS v4, shadcn/radix UI, and sonner notifications. The primary feature is a Weather app that fetches current and forecast data from WeatherAPI via a serverless route, with a client UI for search, watch list, and detailed charts.
+
+Key UX/tech highlights:
+- Debounced city search, normalized inputs, and duplicate prevention
+- Weather cards with memoization, optimistic caching (client TTL), and loading skeletons
+- Details dialog with hourly chart (Recharts)
+- Watch list persisted to localStorage (SSR-safe) with add/remove and clear actions
+- Server route validation, friendly error mapping, and explicit ISR caching
+
+
+## Tech Stack
+- Next.js 15 (App Router)
+- React 19
+- Tailwind CSS v4
+- shadcn/radix UI components
+- lucide-react icons
+- sonner toasts
+- Recharts
 
 ## Getting Started
+1) Install dependencies
+- Node.js 18+ recommended
+- npm i
 
-First, run the development server:
+2) Configure environment
+- Copy .env.example to .env.local
+- Fill values as noted in the comments (see Environment section below)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+3) Run the app
+- npm run dev
+- Open http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4) Build for production
+- npm run build && npm run start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
+Environment variables for the Weather API are validated on the server at runtime. The API route expects:
 
-## Learn More
+- WEATHER_API_BASE_URL – include trailing slash, e.g. https://api.weatherapi.com/v1/
+- WEATHER_API_API_KEY – expected format: key=YOUR_KEY (the route concatenates this string directly)
+- WEATHER_API_CURRENT_PATH – default current.json
+- WEATHER_API_FORECAST_PATH – default forecast.json
 
-To learn more about Next.js, take a look at the following resources:
+See .env.example for the exact format and comments. Validation is implemented in:
+- src/app/weather/constants/env.ts (getValidatedWeatherEnv)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure (relevant parts)
+- src/app/page.tsx – Home landing
+- src/app/layout.tsx – App shell, Sonner Toaster, Vercel analytics
+- src/app/weather/page.tsx – Weather feature entry (search, grid of cards)
+- src/app/weather/component/WeatherCitySearchForm.tsx – Debounced search form
+- src/app/weather/component/WeatherCard.tsx – Overview card, memoized, client TTL cache
+- src/app/weather/component/WeatherDetail.tsx – Detail dialog + chart
+- src/app/weather/component/Skeletons.tsx – Loading skeletons
+- src/app/weather/util/LocalStorageHelper.tsx – SSR-safe helpers
+- src/app/weather/util/logger.ts – Lightweight logger
+- src/app/api/data/weather/route.ts – Server route; validation, error mapping, ISR caching
+- src/app/weather/constants/* – constants and env validation
 
-## Deploy on Vercel
+## Scripts
+- npm run dev – Start dev server (Turbopack)
+- npm run build – Build production bundle
+- npm run start – Start production server
+- npm run lint – Lint with ESLint
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Accessibility & UX
+- Icon-only buttons include aria-label and title
+- Dialog and tooltip use radix primitives with proper roles and labeling
+- Visible focus rings; keyboard navigation supported
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-# my-app
+## Performance & Reliability
+- Client-side in-memory cache with short TTL to reduce refetching
+- API route uses Next fetch revalidate=300 for upstream caching
+- fetchWithRetry utility (client) with timeout/backoff for transient failures
+
+
+## Development Notes
+- City names are normalized (trim/lowercase) across state and storage
+- Side effects (toasts/removals) are managed in effects, not during render
+- Logger suppresses info logs in production; errors always logged
+

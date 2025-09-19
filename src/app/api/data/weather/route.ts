@@ -4,8 +4,10 @@ import {
   WEATHER_ERROR_MESSAGES,
   WEATHER_SEARCH_PARAMS,
 } from "@/app/weather/constants/weather-constants";
+import { getValidatedWeatherEnv } from "@/app/weather/constants/env";
 import { ErrorResponse } from "@/app/weather/types/weather-types";
 import { NextRequest } from "next/server";
+import { logger } from "@/app/weather/util/logger";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -28,11 +30,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Validate environment variables
-  const BASE_URL = WEATHER_API_PATHS.BASE_URL;
-  const API_KEY = WEATHER_API_PATHS.API_KEY;
-
-  if (!BASE_URL || !API_KEY) {
+  // Validate and read environment variables via centralized validator
+  let BASE_URL: string | undefined;
+  let API_KEY: string | undefined;
+  try {
+    const env = getValidatedWeatherEnv();
+    BASE_URL = env.BASE_URL;
+    API_KEY = env.API_KEY;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (e) {
     return Response.json(
       { error: WEATHER_ERROR_MESSAGES.API_CONFIGURATION_ERROR },
       { status: 500 }
@@ -79,7 +85,7 @@ export async function GET(request: NextRequest) {
     const data = await res.json();
     return Response.json(data);
   } catch (error) {
-    console.error("server error " + error);
+    logger.error("server error ", error);
     const errRes = Response.json(
       {
         error: (error as Error).message || "An unexpected error occurred",

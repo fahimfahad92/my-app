@@ -18,6 +18,9 @@ import { WeatherResponse } from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
 
 import { memo, useEffect, useState } from "react";
+import {CardSkeleton} from "@/app/weather/component/Skeletons";
+import {getArrayFromLocalStorage} from "@/app/weather/util/LocalStorageHelper";
+import {logger} from "@/app/weather/util/logger";
 
 // Simple in-memory cache with TTL for weather overview requests
 const WEATHER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
@@ -41,6 +44,7 @@ function WeatherCard({
   const [error, setError] = useState<string | null>(null);
   const [localDate, setLocalDate] = useState<string>("");
   const [isHighlighted, setIsHighlighted] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const fetchData = async (isUpdate: boolean) => {
     try {
@@ -89,7 +93,7 @@ function WeatherCard({
         toast.success(`Got data for ${cityName}`);
       }
     } catch (err) {
-      console.error("Error fetching data:", (err as Error).message);
+      logger.error("Error fetching data:", (err as Error).message);
       setError((err as Error).message || "Unknown error");
     } finally {
       setLoading(false);
@@ -101,6 +105,10 @@ function WeatherCard({
     if (!cityName) return;
     setError(null);
     fetchData(false);
+
+    // reflect watch list state
+    const watch = getArrayFromLocalStorage<string>("watchList").map((c) => c?.trim().toLowerCase());
+    setIsSaved(watch.includes(cityName.trim().toLowerCase()));
 
     setIsHighlighted(true); // Highlight on mount/update
     const timer = setTimeout(() => setIsHighlighted(false), 2000); // Remove after 2s
@@ -120,7 +128,7 @@ function WeatherCard({
     fetchData(true);
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <CardSkeleton />;
   if (error) {
     return null;
   }
@@ -208,12 +216,18 @@ function WeatherCard({
             <Trash2 className="w-4 h-4 mr-2" />
           </Button>
           <Button
-            variant="default"
+            variant={isSaved ? "secondary" : "default"}
             size="sm"
-            onClick={() => addToWatchList(cityName)}
+            onClick={() => {
+              if (!isSaved) {
+                addToWatchList(cityName);
+                setIsSaved(true);
+              }
+            }}
             className="center"
-            aria-label="Add city to watch list"
-            title="Add city to watch list"
+            aria-label={isSaved ? "Already in watch list" : "Add city to watch list"}
+            title={isSaved ? "Already in watch list" : "Add city to watch list"}
+            disabled={isSaved}
           >
             <BookmarkPlus className="w-4 h-4 mr-2" />
           </Button>

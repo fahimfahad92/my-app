@@ -76,8 +76,6 @@ See .env.example for the exact format and comments. Validation is implemented in
 ## Performance & Reliability
 - Client-side in-memory cache with short TTL to reduce refetching
 - API route uses Next fetch revalidate=300 for upstream caching
-- fetchWithRetry utility (client) with timeout/backoff for transient failures
-
 
 ## Development Notes
 - City names are normalized (trim/lowercase) across state and storage

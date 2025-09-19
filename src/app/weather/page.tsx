@@ -81,8 +81,10 @@ export default function WeatherApp() {
 
   return (
     <>
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 space-y-4">
-            <HomeComponent/>
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 space-y-4">
+            <div className="absolute top-4 left-40">
+                <HomeComponent/>
+            </div>
 
             <h1 className="text-2xl font-semibold mb-6 text-center">Weather APP</h1>
 

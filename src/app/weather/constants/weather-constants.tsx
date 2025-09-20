@@ -11,6 +11,8 @@ export const WEATHER_API_CONSTANT = {
 
 export const WEATHER_ERROR_MESSAGES = {
   CITY_REQUIRED: "City name is required",
+  INVALID_CITY_NAME: "Invalid city name. Use letters, spaces, hyphens, and periods only.",
+  QUERY_DATE_REQUIRED: "Missing required parameter: queryDate",
   API_FAILURE: "Failed to fetch weather data",
   API_CONFIGURATION_ERROR: "Weather API configuration error",
 };

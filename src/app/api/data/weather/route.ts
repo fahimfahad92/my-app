@@ -4,10 +4,10 @@ import {
   WEATHER_ERROR_MESSAGES,
   WEATHER_SEARCH_PARAMS,
 } from "@/app/weather/constants/weather-constants";
-import { getValidatedWeatherEnv } from "@/app/weather/constants/env";
-import { ErrorResponse } from "@/app/weather/types/weather-types";
-import { NextRequest } from "next/server";
-import { logger } from "@/app/weather/util/logger";
+import {getValidatedWeatherEnv} from "@/app/weather/constants/env";
+import {ErrorResponse} from "@/app/weather/types/weather-types";
+import {NextRequest} from "next/server";
+import {logger} from "@/app/weather/util/logger";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Basic input validation for city name (letters, spaces, hyphens, periods), 1-64 chars
-  const isValidCity = /^[a-zA-Z\s\-\.]{1,64}$/.test(cityName);
+  const isValidCity = /^[a-zA-Z\s\-.]{1,64}$/.test(cityName);
   if (!isValidCity) {
     return Response.json(
-      { error: "Invalid city name. Use letters, spaces, hyphens, and periods only." },
+      {error: WEATHER_ERROR_MESSAGES.INVALID_CITY_NAME},
       { status: 400 }
     );
   }
@@ -46,7 +46,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Build URL based on request type
     let url: string;
 
     if (type === WEATHER_API_TYPE.OVERVIEW) {
@@ -58,7 +57,7 @@ export async function GET(request: NextRequest) {
 
       if (!queryDate) {
         return Response.json(
-          { error: "Missing required parameter: queryDate" },
+          {error: WEATHER_ERROR_MESSAGES.QUERY_DATE_REQUIRED},
           { status: 400 }
         );
       }
@@ -86,12 +85,11 @@ export async function GET(request: NextRequest) {
     return Response.json(data);
   } catch (error) {
     logger.error("server error ", error);
-    const errRes = Response.json(
+    return Response.json(
       {
         error: (error as Error).message || "An unexpected error occurred",
       },
       { status: 500 }
     );
-    return errRes;
   }
 }

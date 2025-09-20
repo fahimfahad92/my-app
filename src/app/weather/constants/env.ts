@@ -1,6 +1,6 @@
 // Server-side environment validation for Weather API config
 
-function assert(condition: never, message: string): asserts condition {
+function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
   }
@@ -19,12 +19,13 @@ export function getValidatedWeatherEnv(): WeatherEnv {
   const CURRENT = process.env.WEATHER_API_CURRENT_PATH || "current.json";
   const FORECAST = process.env.WEATHER_API_FORECAST_PATH || "forecast.json";
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
   assert(BASE_URL, "Weather API configuration error: BASE_URL is missing");
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
+
   assert(API_KEY, "Weather API configuration error: API_KEY is missing");
+  
+  assert(CURRENT, "Weather API configuration error: CURRENT is missing");
+  
+  assert(FORECAST, "Weather API configuration error: FORECAST is missing");
 
   // Encourage trailing slash for safe path concatenation
   const normalizedBase = BASE_URL!.endsWith("/") ? BASE_URL! : `${BASE_URL!}/`;

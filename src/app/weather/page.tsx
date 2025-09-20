@@ -11,13 +11,13 @@ import {
   setItemInLocalStorageAsArray,
 } from "./util/LocalStorageHelper";
 import HomeComponent from "@/app/weather/component/HomeComponent";
-import { logger } from "./util/logger";
+import {logger} from "./util/logger";
 
 
 export default function WeatherApp() {
   const [cityName, setCityName] = useState("");
   const [cities, setCities] = useState<string[] | []>([]);
-
+  
   useEffect(() => {
     logger.info("Initializing cities from local storage");
     const stored = getArrayFromLocalStorage<string>("watchList");
@@ -42,11 +42,11 @@ export default function WeatherApp() {
     });
     setCityName("");
   }, [cityName]);
-
+  
   const removeCity = useCallback((cityName: string) => {
     setCities((prev) => prev.filter((currentLocation) => currentLocation !== cityName));
   }, []);
-
+  
   const addToWatchList = useCallback((cityName: string) => {
     const normalized = cityName.trim().toLowerCase();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -61,19 +61,19 @@ export default function WeatherApp() {
     logger.info(`${cityName} added to watch list`);
     toast.success(`${cityName} added to watch list`);
   }, []);
-
-  const removefromWatchList = useCallback((cityName: string) => {
+  
+  const removeFromWatchList = useCallback((cityName: string) => {
     const normalized = cityName.trim().toLowerCase();
     removeItemFromLocalStorageArray("watchList", normalized);
     removeCity(normalized);
     toast.info(`${cityName} removed`);
   }, [removeCity]);
-
+  
   const fixCity = useCallback((prevCity: string, updatedCity: string) => {
     const prev = prevCity.trim().toLowerCase();
     const normalizedCity = updatedCity.trim().toLowerCase();
     if (!normalizedCity) return;
-
+    
     setCities((prevCities: string[]) => {
       const withoutPrev = prevCities.filter((c) => c !== prev);
       if (withoutPrev.includes(normalizedCity)) {
@@ -84,71 +84,72 @@ export default function WeatherApp() {
       return [normalizedCity, ...withoutPrev];
     });
   }, []);
-
+  
   return (
     <>
-        <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 space-y-4">
-            <div className="absolute top-4 left-40">
-                <HomeComponent/>
-            </div>
-
-            <h1 className="text-2xl font-semibold mb-6 text-center">Weather APP</h1>
-
-            <div className="w-full max-w-xl flex items-center mb-6 relative">
-                {/* Search Form */}
-                <WeatherCitySearchForm setCityName={setCityName}/>
-
-                {/* Info Tooltip */}
-                <div className="relative group ml-4">
-                    <Info className="w-5 h-5 text-gray-500 hover:text-blue-500 cursor-pointer" aria-describedby="weather-icons-tip" aria-label="Weather card icon legend"/>
-
-                    <div
-                        id="weather-icons-tip"
-                        role="tooltip"
-                        className="absolute right-0 top-full mt-2 w-72 p-4 bg-white border border-gray-200 rounded-md shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 z-50 space-y-2">
-                        <p className="text-sm text-gray-800 font-medium mb-1">
-                            What the icons mean:
-                        </p>
-
-                        <div className="flex items-center space-x-2 text-sm text-gray-700">
-                            <RefreshCcw className="w-4 h-4"/>
-                            <span>Refresh weather data</span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 text-sm text-gray-700">
-                            <ListCollapse className="w-4 h-4"/>
-                            <span>Show weather details</span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 text-sm text-gray-700">
-                            <Trash2 className="w-4 h-4"/>
-                            <span>Delete city</span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 text-sm text-gray-700">
-                            <BookmarkPlus className="w-4 h-4"/>
-                            <span>Add city to watch list</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-7xl">
-                {cities.map((city) =>
-                    city ? (
-                        <div key={city} className="p-2">
-                            <WeatherCard
-                                cityName={city}
-                                removeCity={removeCity}
-                                addToWatchList={addToWatchList}
-                                removefromWatchList={removefromWatchList}
-                                fixCity={fixCity}
-                            />
-                        </div>
-                    ) : null
-                )}
-            </div>
+      <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 space-y-4">
+        <div className="absolute top-4 left-40">
+          <HomeComponent/>
         </div>
+        
+        <h1 className="text-2xl font-semibold mb-6 text-center">Weather APP</h1>
+        
+        <div className="w-full max-w-xl flex items-center mb-6 relative">
+          {/* Search Form */}
+          <WeatherCitySearchForm setCityName={setCityName}/>
+          
+          {/* Info Tooltip */}
+          <div className="relative group ml-4">
+            <Info className="w-5 h-5 text-gray-500 hover:text-blue-500 cursor-pointer"
+                  aria-describedby="weather-icons-tip" aria-label="Weather card icon legend"/>
+            
+            <div
+              id="weather-icons-tip"
+              role="tooltip"
+              className="absolute right-0 top-full mt-2 w-72 p-4 bg-white border border-gray-200 rounded-md shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 z-50 space-y-2">
+              <p className="text-sm text-gray-800 font-medium mb-1">
+                What the icons mean:
+              </p>
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <RefreshCcw className="w-4 h-4"/>
+                <span>Refresh weather data</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <ListCollapse className="w-4 h-4"/>
+                <span>Show weather details</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <Trash2 className="w-4 h-4"/>
+                <span>Delete city</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <BookmarkPlus className="w-4 h-4"/>
+                <span>Add city to watch list</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-7xl">
+          {cities.map((city) =>
+            city ? (
+              <div key={city} className="p-2">
+                <WeatherCard
+                  cityName={city}
+                  removeCity={removeCity}
+                  addToWatchList={addToWatchList}
+                  removeFromWatchList={removeFromWatchList}
+                  fixCity={fixCity}
+                />
+              </div>
+            ) : null
+          )}
+        </div>
+      </div>
     </>
   );
 }

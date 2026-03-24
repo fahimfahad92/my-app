@@ -12,11 +12,13 @@ import {
 } from "./util/LocalStorageHelper";
 import HomeComponent from "@/app/weather/component/HomeComponent";
 import {logger} from "./util/logger";
+import {useStatsigEvents} from "@/components/statsig-event";
 
 
 export default function WeatherApp() {
   const [cityName, setCityName] = useState("");
   const [cities, setCities] = useState<string[] | []>([]);
+  const {logEvent} = useStatsigEvents();
   
   useEffect(() => {
     logger.info("Initializing cities from local storage");
@@ -25,6 +27,7 @@ export default function WeatherApp() {
       new Set((stored || []).map((c) => c?.trim().toLowerCase()).filter(Boolean))
     );
     setCities(normalized);
+    logEvent("myapp_pv_weather", {page: "weather"});
   }, []);
   
   useEffect(() => {
@@ -37,6 +40,7 @@ export default function WeatherApp() {
         return [...prevCities];
       }
       logger.info("City updated for " + cityName);
+      logEvent("myapp_pv_weather", {page: "weather", city: normalizedCity, action: "add"});
       
       return [normalizedCity, ...prevCities];
     });

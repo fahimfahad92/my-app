@@ -6,9 +6,11 @@ import ClockList from "@/app/timezone/component/ClockList";
 import HomeComponent from "@/app/weather/component/HomeComponent";
 import {TIMEZONES} from "@/app/timezone/data/TIMEZONES";
 import {getFromLocalStorage, setInLocalStorage} from "@/app/util/LocalStorageHelper";
+import {useStatsigEvents} from "@/components/statsig-event";
 
 export default function Timezones() {
   const [timezones, setTimezones] = useState<string[]>([]);
+  const {logEvent} = useStatsigEvents();
   
   useEffect(() => {
     const stored = getFromLocalStorage<string>("timezones");
@@ -20,6 +22,7 @@ export default function Timezones() {
   
   useEffect(() => {
     setInLocalStorage("timezones", timezones);
+    logEvent("myapp_pv_timezone", {page: "timezone", timezones: timezones.join(",")});
   }, [timezones]);
   
   const addTimezone = (tz: string) => {

@@ -333,7 +333,6 @@ export const TIMEZONES = [
   "America/Atka",
   "Pacific/Honolulu",
   "Pacific/Johnston",
-  "HST",
   "Asia/Hong_Kong",
   "Hongkong",
   "Asia/Hovd",

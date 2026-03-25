@@ -7,29 +7,29 @@ import {
 import {getValidatedWeatherEnv} from "@/app/weather/constants/env";
 import {ErrorResponse} from "@/app/weather/types/weather-types";
 import {NextRequest} from "next/server";
-import {logger} from "@/app/weather/util/logger";
+import {logger} from "@/app/util/logger";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
+  const {searchParams} = request.nextUrl;
   const cityName = searchParams.get(WEATHER_SEARCH_PARAMS.CITY_NAME);
   const type = searchParams.get(WEATHER_SEARCH_PARAMS.TYPE);
-
+  
   if (!cityName) {
     return Response.json(
-      { error: WEATHER_ERROR_MESSAGES.CITY_REQUIRED },
-      { status: 400 }
+      {error: WEATHER_ERROR_MESSAGES.CITY_REQUIRED},
+      {status: 400}
     );
   }
-
+  
   // Basic input validation for city name (letters, spaces, hyphens, periods), 1-64 chars
   const isValidCity = /^[a-zA-Z\s\-.]{1,64}$/.test(cityName);
   if (!isValidCity) {
     return Response.json(
       {error: WEATHER_ERROR_MESSAGES.INVALID_CITY_NAME},
-      { status: 400 }
+      {status: 400}
     );
   }
-
+  
   // Validate and read environment variables via centralized validator
   let BASE_URL: string | undefined;
   let API_KEY: string | undefined;
@@ -40,36 +40,36 @@ export async function GET(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     return Response.json(
-      { error: WEATHER_ERROR_MESSAGES.API_CONFIGURATION_ERROR },
-      { status: 500 }
+      {error: WEATHER_ERROR_MESSAGES.API_CONFIGURATION_ERROR},
+      {status: 500}
     );
   }
-
+  
   try {
     let url: string;
-
+    
     if (type === WEATHER_API_TYPE.OVERVIEW) {
       const path = WEATHER_API_PATHS.CURRENT || "";
       url = `${BASE_URL}${path}?${API_KEY}&q=${encodeURIComponent(cityName)}`;
     } else {
       const path = WEATHER_API_PATHS.FORECAST || "";
       const queryDate = searchParams.get(WEATHER_SEARCH_PARAMS.QUERY_DATE);
-
+      
       if (!queryDate) {
         return Response.json(
           {error: WEATHER_ERROR_MESSAGES.QUERY_DATE_REQUIRED},
-          { status: 400 }
+          {status: 400}
         );
       }
-
+      
       url = `${BASE_URL}${path}?${API_KEY}&q=${encodeURIComponent(
         cityName
       )}&dt=${queryDate}`;
     }
-
+    
     // Fetch and return weather data with ISR revalidation
-    const res = await fetch(url, { next: { revalidate: 300 } });
-
+    const res = await fetch(url, {next: {revalidate: 300}});
+    
     if (!res.ok) {
       const errorResponse: ErrorResponse = await res.json();
       const code = (errorResponse as ErrorResponse)?.error?.code;
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       if (code === 9999) friendly = "Weather service temporary error. Please try again.";
       throw new Error(friendly);
     }
-
+    
     const data = await res.json();
     return Response.json(data);
   } catch (error) {
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       {
         error: (error as Error).message || "An unexpected error occurred",
       },
-      { status: 500 }
+      {status: 500}
     );
   }
 }

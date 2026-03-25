@@ -9,9 +9,9 @@ import {
   getArrayFromLocalStorage,
   removeItemFromLocalStorageArray,
   setItemInLocalStorageAsArray,
-} from "./util/LocalStorageHelper";
+} from "@/app/util/LocalStorageHelper";
 import HomeComponent from "@/app/weather/component/HomeComponent";
-import {logger} from "./util/logger";
+import {logger} from "@/app/util/logger";
 import {useStatsigEvents} from "@/components/statsig-event";
 
 

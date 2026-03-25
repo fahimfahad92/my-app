@@ -9,8 +9,8 @@ import WeatherDetail from "./WeatherDetail";
 
 import {memo, useEffect, useState} from "react";
 import {CardSkeleton} from "@/app/weather/component/Skeletons";
-import {getArrayFromLocalStorage} from "@/app/weather/util/LocalStorageHelper";
-import {logger} from "@/app/weather/util/logger";
+import {getArrayFromLocalStorage} from "@/app/util/LocalStorageHelper";
+import {logger} from "@/app/util/logger";
 
 // Simple in-memory cache with TTL for weather overview requests
 const WEATHER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes

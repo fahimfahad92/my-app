@@ -20,7 +20,7 @@ import {WEATHER_API_CONSTANT, WEATHER_API_TYPE,} from "../constants/weather-cons
 import {TemperatureDataPoint, WeatherDetailResponse,} from "../types/weather-types";
 import LineChartComponent from "./LineChartComponent";
 import {DetailSkeleton} from "./Skeletons";
-import {logger} from "../util/logger";
+import {logger} from "@/app/util/logger";
 
 export default function WeatherDetail({
                                         cityName, localDate,

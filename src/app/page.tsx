@@ -1,22 +1,22 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { CloudSun } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardTitle} from "@/components/ui/card";
+import {Clock3, CloudSun} from "lucide-react";
 
 const features = [
   {
     title: "Weather App",
     description: "Get real-time weather updates for your favorite cities.",
     href: "/weather",
-    icon: <CloudSun className="w-8 h-8 text-blue-500" />,
+    icon: <CloudSun className="w-8 h-8 text-blue-500"/>,
   },
-  // {
-  //   title: "To-Do List",
-  //   description: "Organize your tasks and stay productive every day.",
-  //   href: "/todo",
-  //   icon: <ListTodo className="w-8 h-8 text-green-500" />,
-  // },
+  {
+    title: "World Clock",
+    description: "Track current time across multiple timezones in real-time.",
+    href: "/timezone",
+    icon: <Clock3 className="w-8 h-8 text-blue-500"/>,
+  }
   // {
   //   title: "RSS Feed Manager",
   //   description: "Subscribe to and manage RSS feeds in one place.",
@@ -39,7 +39,7 @@ export default function Home() {
           Welcome to Your Personal Dashboard
         </h1>
       </section>
-
+      
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
         {features.map((feature) => (
           <Link key={feature.title} href={feature.href}>

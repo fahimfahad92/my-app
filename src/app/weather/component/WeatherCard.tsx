@@ -41,7 +41,7 @@ function WeatherCard({
   const [error, setError] = useState<string | null>(null);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [lastUpdatedText, setLastUpdatedText] = useState("Just now");
-
+  
   const fetchData = async (isUpdate: boolean) => {
     const cacheKey = cityName.trim().toLowerCase();
     try {
@@ -52,7 +52,7 @@ function WeatherCard({
           toast.success(`Loaded cached data for ${cityName}`);
           return;
         }
-
+        
         const inflight = pendingRequests.get(cacheKey);
         if (inflight) {
           const result = await inflight;
@@ -60,13 +60,13 @@ function WeatherCard({
           return;
         }
       }
-
+      
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
         type: WEATHER_API_TYPE.OVERVIEW,
       });
       const url = `${WEATHER_API_CONSTANT.BASE_ROUTE_URL}?${urlParams.toString()}`;
-
+      
       const promise: Promise<WeatherResponse> = fetch(url).then(async (response) => {
         if (!response.ok) {
           const errorData = await response.json();
@@ -74,24 +74,24 @@ function WeatherCard({
         }
         return response.json() as Promise<WeatherResponse>;
       });
-
+      
       if (!isUpdate) pendingRequests.set(cacheKey, promise);
-
+      
       let result: WeatherResponse;
       try {
         result = await promise;
       } finally {
         pendingRequests.delete(cacheKey);
       }
-
+      
       setData(result);
-
+      
       if (overviewCache.size >= MAX_CACHE_SIZE) {
         const oldest = overviewCache.keys().next().value;
         if (oldest !== undefined) overviewCache.delete(oldest);
       }
       overviewCache.set(cacheKey, {data: result, ts: Date.now()});
-
+      
       if (cityName !== result.location.name.toLowerCase()) {
         fixCity(cityName, result.location.name);
       }
@@ -107,7 +107,7 @@ function WeatherCard({
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     if (!cityName) return;
     setError(null);
@@ -116,13 +116,13 @@ function WeatherCard({
     const timer = setTimeout(() => setIsHighlighted(false), 2000);
     return () => clearTimeout(timer);
   }, [cityName]);
-
+  
   useEffect(() => {
     if (!error) return;
     toast.error(`Error: ${error}`);
     removeCity(cityName);
   }, [error, cityName, removeCity]);
-
+  
   // 4.1: Live "updated X min ago" counter, ticks every minute
   useEffect(() => {
     if (!data) return;
@@ -131,17 +131,17 @@ function WeatherCard({
     const id = setInterval(() => setLastUpdatedText(getTimeSince(epoch)), 60000);
     return () => clearInterval(id);
   }, [data]);
-
+  
   const refreshData = () => {
     if (!cityName) return;
     setError(null);
     fetchData(true);
   };
-
+  
   if (loading) return <CardSkeleton/>;
   if (error) return null;
   if (!data) return null;
-
+  
   return (
     <div
       className={cn(
@@ -167,20 +167,20 @@ function WeatherCard({
           {/* 4.5: Condition description text */}
           <p className="text-sm text-gray-600">{data.current.condition.text}</p>
         </CardHeader>
-
+        
         <CardContent className="px-4 pb-3 space-y-3">
           <p className="text-center text-xs text-gray-400">
             {data.location.tz_id}
             <span className="mx-1">·</span>
             {data.location.localtime}
           </p>
-
-          <div className="text-center">
+          
+          <div className="flex justify-center">
             <Label className="text-3xl font-bold text-blue-600">
               {data.current.temp_c}°C
             </Label>
           </div>
-
+          
           {/* 4.6 + 4.11: Feels-like, humidity, wind in a compact secondary row */}
           <div className="grid grid-cols-3 gap-1 text-center">
             <div>
@@ -196,11 +196,11 @@ function WeatherCard({
               <p className="text-xs text-gray-400">Wind (kph)</p>
             </div>
           </div>
-
+          
           {/* 4.1: Live "updated X min ago" timestamp */}
           <p className="text-center text-xs text-gray-400">Updated {lastUpdatedText}</p>
         </CardContent>
-
+        
         <CardFooter className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
@@ -211,13 +211,13 @@ function WeatherCard({
           >
             <RefreshCcw className="w-4 h-4"/>
           </Button>
-
+          
           <WeatherDetail
             cityName={cityName}
             localTimeEpoch={data.location.localtime_epoch}
             tzId={data.location.tz_id}
           />
-
+          
           {/* 4.4: Dismiss from page only — does not remove from watchlist */}
           <Button
             variant="outline"
@@ -228,7 +228,7 @@ function WeatherCard({
           >
             <X className="w-4 h-4"/>
           </Button>
-
+          
           {/* 4.4: Bookmark toggle — add or remove from watchlist */}
           <Button
             variant={isSaved ? "destructive" : "default"}

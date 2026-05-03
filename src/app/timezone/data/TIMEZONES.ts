@@ -298,6 +298,8 @@ export const TIMEZONE_ENTRIES: TimezoneEntry[] = [
   
   // Universal
   {timezone: "UTC", country: "UTC"},
+  {timezone: "PST8PDT", country: "PST"},
+  {timezone: "EST5EDT", country: "EST"},
 ];
 
 export const TIMEZONES = Array.from(

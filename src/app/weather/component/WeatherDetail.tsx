@@ -1,7 +1,6 @@
 "use client";
 
 import {Button} from "@/components/ui/button";
-import {Card, CardContent} from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -12,14 +11,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {Label} from "@radix-ui/react-label";
 import {useEffect, useMemo, useState} from "react";
+import {cn} from "@/lib/utils";
 import {ListCollapse} from "lucide-react";
 import {WEATHER_API_CONSTANT, WEATHER_API_TYPE,} from "../constants/weather-constants";
-import {TemperatureDataPoint, WeatherDetailResponse,} from "../types/weather-types";
+import {TemperatureDataPoint, TemperatureUnit, WeatherDetailResponse,} from "../types/weather-types";
 import LineChartComponent from "./LineChartComponent";
+import HourlyStrip from "./HourlyStrip";
+import DayStatsSection from "./DayStatsSection";
 import {DetailSkeleton} from "./Skeletons";
 import {logger} from "@/app/util/logger";
+import {getMoonEmoji} from "@/app/weather/util/conditionUtils";
 
 function formatDayLabel(dateStr: string, index: number): string {
   if (index === 0) return "Today";
@@ -33,11 +35,17 @@ function formatDayLabel(dateStr: string, index: number): string {
 }
 
 export default function WeatherDetail({
-                                        cityName, localTimeEpoch, tzId,
-                                      }: {
+  cityName,
+  localTimeEpoch,
+  tzId,
+  unit,
+  triggerClassName,
+}: {
   cityName: string;
   localTimeEpoch: number;
   tzId: string;
+  unit: TemperatureUnit;
+  triggerClassName?: string;
 }) {
   const [data, setData] = useState<WeatherDetailResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,7 +67,7 @@ export default function WeatherDetail({
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
         type: WEATHER_API_TYPE.DETAIL,
-        queryDate: queryDate,
+        queryDate,
       });
       const url = `${WEATHER_API_CONSTANT.BASE_ROUTE_URL}?${urlParams.toString()}`;
 
@@ -79,34 +87,44 @@ export default function WeatherDetail({
 
   useEffect(() => {
     if (cityName) fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityName, localTimeEpoch, tzId]);
 
-  // 4.7: Derive chart data for the selected forecast day via memo
   const chartData = useMemo<TemperatureDataPoint[]>(() => {
     if (!data) return [];
     const day = data.forecast.forecastday[selectedDay];
     return (day?.hour ?? []).map((h) => ({
       hour: h.time,
       temp: h.temp_c,
+      temp_f: h.temp_f,
+      feelslike_c: h.feelslike_c,
+      feelslike_f: h.feelslike_f,
+      chance_of_rain: h.chance_of_rain,
       icon: h.condition?.icon,
     }));
   }, [data, selectedDay]);
 
   const forecastDay = data?.forecast.forecastday[selectedDay];
+  const unitLabel = unit === "C" ? "°C" : "°F";
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button aria-label="Show weather details" title="Show weather details">
-          <ListCollapse className="w-4 h-4 mr-2"/>
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label="Show weather details"
+          title="Show weather details"
+          className={cn("w-full rounded-none", triggerClassName)}
+        >
+          <ListCollapse className="w-4 h-4"/>
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="w-full max-w-4xl sm:max-w-2xl md:max-w-3xl max-h-[80vh] overflow-y-auto px-2 sm:px-4">
+      <DialogContent className="w-full max-w-4xl sm:max-w-2xl md:max-w-3xl max-h-[85vh] overflow-y-auto px-2 sm:px-4">
         {loading ? (
           <DetailSkeleton/>
         ) : error ? (
-          // 4.2: Retry button on error
           <div className="flex flex-col items-center gap-3 p-6 text-center">
             <p className="text-red-500">Error: {error}</p>
             <Button variant="outline" onClick={fetchData}>Retry</Button>
@@ -114,15 +132,11 @@ export default function WeatherDetail({
         ) : data ? (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg md:text-xl">
-                {data.location.name}
-              </DialogTitle>
-              <DialogDescription className="text-sm md:text-base">
-                {data.location.country}
-              </DialogDescription>
+              <DialogTitle className="text-lg md:text-xl">{data.location.name}</DialogTitle>
+              <DialogDescription className="text-sm md:text-base">{data.location.country}</DialogDescription>
             </DialogHeader>
 
-            {/* 4.7: Day-selector tabs */}
+            {/* Day-selector tabs */}
             {data.forecast.forecastday.length > 1 && (
               <div className="flex gap-2 flex-wrap">
                 {data.forecast.forecastday.map((day, i) => (
@@ -138,56 +152,57 @@ export default function WeatherDetail({
               </div>
             )}
 
-            <Card>
-              <CardContent className="space-y-6 pt-6 px-4 md:px-8">
-                {forecastDay && (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center text-sm md:text-base">
-                      <div>
-                        <Label>Max Temp</Label>
-                        <div>{forecastDay.day.maxtemp_c}°C</div>
-                      </div>
-                      <div>
-                        <Label>Min Temp</Label>
-                        <div>{forecastDay.day.mintemp_c}°C</div>
-                      </div>
-                      <div className="col-span-full">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={forecastDay.day.condition.icon}
-                          alt={forecastDay.day.condition.text}
-                          className="mx-auto h-16 w-16"
-                        />
-                      </div>
-                    </div>
+            {forecastDay && (
+              <div className="space-y-5 pb-2">
+                {/* Day summary */}
+                <div className="grid grid-cols-2 gap-4 text-center text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Max Temp</p>
+                    <p className="font-semibold">{unit === "C" ? forecastDay.day.maxtemp_c : forecastDay.day.maxtemp_f}{unitLabel}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Min Temp</p>
+                    <p className="font-semibold">{unit === "C" ? forecastDay.day.mintemp_c : forecastDay.day.mintemp_f}{unitLabel}</p>
+                  </div>
+                  <div className="col-span-2 flex justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={forecastDay.day.condition.icon} alt={forecastDay.day.condition.text} className="h-14 w-14"/>
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-center text-sm md:text-base">
-                      <div>
-                        <Label>Sunrise</Label>
-                        <div>{forecastDay.astro.sunrise}</div>
-                      </div>
-                      <div>
-                        <Label>Sunset</Label>
-                        <div>{forecastDay.astro.sunset}</div>
-                      </div>
-                      <div>
-                        <Label>Moonrise</Label>
-                        <div>{forecastDay.astro.moonrise}</div>
-                      </div>
-                      <div>
-                        <Label>Moonset</Label>
-                        <div>{forecastDay.astro.moonset}</div>
-                      </div>
-                    </div>
+                {/* 5.15: Day stats — UV, humidity, visibility, wind, precip */}
+                <DayStatsSection day={forecastDay.day}/>
 
-                    <LineChartComponent
-                      date={formatDayLabel(forecastDay.date, selectedDay)}
-                      chartData={chartData}
-                    />
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                {/* 5.16: Astronomy + moon phase */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center text-sm">
+                  <AstroCell label="Sunrise" value={forecastDay.astro.sunrise}/>
+                  <AstroCell label="Sunset" value={forecastDay.astro.sunset}/>
+                  <AstroCell label="Moonrise" value={forecastDay.astro.moonrise}/>
+                  <AstroCell label="Moonset" value={forecastDay.astro.moonset}/>
+                  <AstroCell
+                    label="Moon Phase"
+                    value={`${getMoonEmoji(forecastDay.astro.moon_phase)} ${forecastDay.astro.moon_phase}`}
+                  />
+                  <AstroCell
+                    label="Illumination"
+                    value={`${forecastDay.astro.moon_illumination}%`}
+                  />
+                </div>
+
+                {/* 5.14: Horizontal hourly strip */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Hourly</p>
+                  <HourlyStrip hours={forecastDay.hour} unit={unit}/>
+                </div>
+
+                {/* 5.13: ComposedChart */}
+                <LineChartComponent
+                  date={formatDayLabel(forecastDay.date, selectedDay)}
+                  chartData={chartData}
+                  unit={unit}
+                />
+              </div>
+            )}
 
             <DialogFooter className="mt-4 sm:justify-start">
               <DialogClose asChild>
@@ -198,5 +213,14 @@ export default function WeatherDetail({
         ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AstroCell({label, value}: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-gray-50 px-2 py-2">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-sm font-medium text-gray-800">{value}</p>
+    </div>
   );
 }

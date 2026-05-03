@@ -195,45 +195,226 @@ Visual and interaction improvements to make the feature feel polished.
 
 ---
 
-## Phase 5 — Advanced / Future Features
+## Phase 5 — Advanced Features & Full UI/UX Redesign
 
-Larger scope items to consider after the above phases are stable.
+Merged from the original Phase 5 and the Phase 6 redesign plan. Items are ordered by recommended implementation sequence.
+
+> **Server-side caching is already implemented.** `route.ts` uses Next.js ISR (`{next: {revalidate: 300}}`), which caches each upstream WeatherAPI response at the server for 5 minutes. Any two users fetching the same city within that window share the cached response — no extra work needed.
+
+---
 
 ### 5.1 Geolocation auto-detection on first visit
-- Prompt the user for location permission; if granted, auto-search their current city using the browser's Geolocation API and the WeatherAPI reverse-geocode endpoint
+- Prompt for location permission via the browser Geolocation API; if granted, auto-search the user's current city
 - Show a dismissible banner: "Showing weather for your current location"
+- **Effort:** M
 
 ### 5.2 Temperature unit toggle (°C / °F)
-- Add a global toggle (stored in localStorage) that switches all displayed temperatures between Celsius and Fahrenheit
-- WeatherAPI returns both; conversion is client-side only — no extra API calls needed
+- Small toggle pill in the page header (`°C · °F`), persisted to localStorage key `"tempUnit"`
+- Pass `unit: "C" | "F"` prop down to `WeatherCard`, `WeatherDetail`, `LineChartComponent`; each picks `temp_c` vs `temp_f` — both are always returned by the API, no re-fetch needed
+- **Files:** `weather/page.tsx`, `WeatherCard.tsx`, `WeatherDetail.tsx`, `LineChartComponent.tsx`
+- **Effort:** S
 
 ### 5.3 Weather alerts and severe condition warnings
-- WeatherAPI provides alert data; surface active alerts as a dismissible banner or badge on the card
-- Highlight the card border in red/amber when an active alert exists for that city
+- WeatherAPI's `/alerts.json` endpoint returns active weather alerts by region
+- Surface alerts as a dismissible banner or a red/amber badge on the card border
+- **Note:** Free-plan alert coverage is limited; verify availability before implementing and skip if unavailable
+- **Effort:** M
 
 ### 5.4 Offline support / stale-while-revalidate
 - Cache the last-known API response per city in localStorage with a timestamp
-- If the user is offline, display the cached data with a "Showing cached data from X ago" notice instead of an error
+- If the user is offline, show the cached data with a "Showing cached data from X ago" notice instead of an error
+- **Effort:** M
 
 ### 5.5 Shareable city watchlist URL
-- Encode the active city list as a URL query string so users can share their configured weather dashboard with others (e.g., `/weather?cities=dhaka,london,new-york`)
+- Encode the active city list as a query string (e.g. `/weather?cities=dhaka,london,new-york`)
+- On load, if the param exists, initialize `cities` from it (merged with or in place of localStorage)
+- **Effort:** S
 
-### 5.6 Keyboard shortcut to focus the search input
-- Press `/` anywhere on the page to focus the city search input, consistent with search UX patterns in tools like GitHub and Linear
+### 5.6 Keyboard shortcut `/` to focus the search input
+- Attach a `keydown` listener on `document` in `weather/page.tsx`; when `event.key === "/"` and the focused element is not an input/textarea, call `event.preventDefault()` and focus the search input ref
+- Show a subtle `/` hint pill at the right edge of the input
+- **Files:** `weather/page.tsx`, `WeatherCitySearchForm.tsx`
+- **Effort:** XS
 
 ### 5.7 Server-side watchlist persistence for authenticated users
-- Sync the watchlist to a backend (or Statsig user properties) so the configuration is consistent across devices and browsers
+> **Out of Scope — do not re-propose.**
+
+---
+
+### 5.8 Unified `forecast.json?days=1` for the overview card
+
+- **Problem:** `WeatherCard` currently calls `current.json`, which has no forecast data — today's max/min temp, chance of rain, and UV index are unavailable on the card.
+- **Fix:** Change the `OVERVIEW` route branch to call `forecast.json?days=1` instead of `current.json`. This endpoint returns **both** `current` (identical to `current.json`) and `forecast.forecastday[0]` in a single response — giving the card today's forecast for free with no extra call.
+- Extend `WeatherResponse` type to include an optional `forecast` field containing today's `ForecastDay`.
+- **Files:** `route.ts`, `weather-constants.ts`, `weather-types.ts`, `WeatherCard.tsx`
+- **Effort:** M
+
+### 5.9 Dynamic card backgrounds based on weather condition
+
+Replace static white cards with condition-aware gradients from `current.condition.code` + `current.is_day`.
+
+| Group | Codes | Day gradient | Text |
+|-------|-------|-------------|------|
+| Sunny / Clear | 1000 | `from-amber-300 to-yellow-200` | dark |
+| Partly cloudy | 1003 | `from-sky-400 to-blue-200` | dark |
+| Cloudy / Overcast / Mist | 1006, 1009, 1030, 1135, 1147 | `from-slate-400 to-slate-300` | dark |
+| Rain (all variants) | 1063, 1150–1201, 1240–1246 | `from-blue-700 to-indigo-400` | white |
+| Snow (all variants) | 1066, 1114, 1117, 1210–1225, 1255–1258 | `from-sky-200 to-slate-100` | dark |
+| Sleet / Freezing rain | 1072, 1168, 1171, 1204, 1207, 1249, 1252 | `from-cyan-600 to-slate-400` | white |
+| Thunder | 1087, 1273–1282 | `from-slate-800 to-violet-700` | white |
+
+Night override (`is_day === 0`): all conditions → `from-slate-900 to-blue-950`, white text.
+
+Extract a `getConditionStyle(code: number, isDay: number): { gradient: string; isDark: boolean }` helper to `src/app/weather/utils/conditionUtils.ts`. Card text colours (`text-gray-900` vs `text-white`) toggle on `isDark`.
+
+- **Files:** `WeatherCard.tsx`, new `src/app/weather/utils/conditionUtils.ts`
+- **Effort:** S
+
+### 5.10 Redesigned card layout
+
+Replaces the current generic label/value stack. Requires 5.8 for max/min and rain badge.
+
+```
+┌─────────────────────────────────────┐
+│  London                  [🌧 60%]  │  ← city name + rain-chance badge (shown if ≥30%)
+│  United Kingdom                     │
+│                                     │
+│         🌧  Moderate rain           │  ← icon w-20 h-20, condition text
+│                                     │
+│             18°C                    │  ← hero temperature (text-5xl)
+│        Feels like 15°C              │
+│                                     │
+│   H:22°  L:14°  ·  Asia/Kolkata     │  ← daily max/min + timezone (one muted line)
+│                                     │
+│   💧42%    💨24 NW    👁10km        │  ← icon-row: Droplets · Wind · Eye (value only)
+│                                     │
+│   Updated 3 min ago                 │
+├─────────────────────────────────────┤
+│    🔄       📋       ✕      🔖     │  ← 4 buttons, equal-width row
+└─────────────────────────────────────┘
+```
+
+Key changes vs current:
+- Weather icon `w-14` → `w-20 h-20`
+- Temperature `text-3xl` → `text-5xl`
+- Stat strip uses Lucide `Droplets`, `Wind`, `Eye` — icon + value, no label text
+- Rain-chance badge (pill, top-right) when `daily_chance_of_rain >= 30`
+- Daily max/min from 5.8 data
+- **Files:** `WeatherCard.tsx`
+- **Effort:** S (after 5.8)
+
+### 5.11 Drag-and-drop card reordering
+
+HTML5 drag-API pattern — same implementation as `ClockList.tsx` in the timezone feature.
+
+- Add `reorderCities(from: number, to: number)` in `weather/page.tsx`
+- Persist display order to localStorage key `"cityOrder"` (applied on mount after loading watchlist)
+- Each card wrapper: `draggable`, `onDragStart`, `onDragOver`, `onDrop`, `onDragEnd`
+- A `dragOverIndex` state renders a 2 px blue insertion line between cards while dragging
+- `GripVertical` Lucide icon, top-left of each card, `opacity-0 group-hover:opacity-100`
+- **Files:** `weather/page.tsx`, `WeatherCard.tsx`
+- **Effort:** S
+
+### 5.12 City search autocomplete using WeatherAPI `/search.json`
+
+Replace the plain text input with a live autocomplete dropdown.
+
+- New route branch: `type=SEARCH` → calls `search.json?q=<input>` upstream
+- Response type: `SearchResult[] = { id, name, region, country, lat, lon }`
+- In `WeatherCitySearchForm`: debounce 300 ms, fetch on each keystroke, show ≤5 results in a dropdown
+- Each row: `<name>, <region>, <country>` — click or Enter to select
+- Keyboard: ↑↓ to navigate list, Escape to close
+- Empty state: "No cities found" when API returns `[]`
+- Retain existing RHF pattern validation as fallback for free-typed (no-selection) submit
+- **Files:** `WeatherCitySearchForm.tsx`, `route.ts`, `weather-constants.ts`, `weather-types.ts`
+- **Effort:** M
+
+### 5.13 Redesigned hourly chart — `ComposedChart` with area + precipitation bars
+
+Replace `LineChart` in `LineChartComponent.tsx` with a richer `ComposedChart` from recharts.
+
+- `Area` for temperature — smooth curve with `<linearGradient>` fill (`rgba(59,130,246,0.6)` → transparent)
+- `Bar` for `chance_of_rain` % — semi-transparent blue, right Y-axis (0–100%), hidden when 0
+- Two `YAxis`: left = temperature, right = rain probability
+- X-axis labels every 3rd hour to avoid crowding
+- Richer tooltip: time · temp · feels-like · rain % · wind speed
+- Accepts `unit: "C" | "F"` prop (from 5.2) to pick the correct temperature field
+- `TemperatureDataPoint` type gains `chance_of_rain: number` and `feelslike_c: number`
+- **Files:** `LineChartComponent.tsx`, `weather-types.ts`, `WeatherDetail.tsx`
+- **Effort:** M
+
+### 5.14 Horizontal hourly scroll strip (iOS Weather-style)
+
+A compact scrollable row placed **above** the chart inside `WeatherDetail`, showing all 24 hours at a glance.
+
+Each column shows:
+```
+  2PM
+  🌧
+  19°
+  ████  60%   ← bar height proportional to chance_of_rain
+```
+
+- `flex overflow-x-auto gap-2 py-2` — no extra dependencies
+- Current hour highlighted: `ring-2 ring-blue-400 rounded-lg bg-blue-50`
+- Data from the same `forecastday.hour` array already fetched — zero extra API calls
+- **Files:** new `HourlyStrip.tsx`, `WeatherDetail.tsx`
+- **Effort:** S
+
+### 5.15 Detail view stats section — UV index, day summary, visibility
+
+Adds a stats grid between the astronomy section and the hourly chart.
+
+**UV index — colour-coded progress bar:**
+```
+UV 7  ████████──  High
+```
+Bands: 0–2 green · 3–5 yellow · 6–7 orange · 8–10 red · 11+ violet. Source: `forecastday.day.uv`.
+
+**Day summary 2×2 grid:**
+| Stat | Icon | Field |
+|------|------|-------|
+| Avg Humidity | `Droplets` | `day.avghumidity` |
+| Avg Visibility | `Eye` | `day.avgvis_km` km |
+| Max Wind | `Wind` | `day.maxwind_kph` kph |
+| Total Precip | `CloudRain` | `day.totalprecip_mm` mm |
+
+Uncomment the corresponding fields in the `DaySummary` type in `weather-types.ts`.
+
+- **Files:** new `DayStatsSection.tsx`, `WeatherDetail.tsx`, `weather-types.ts`
+- **Effort:** S
+
+### 5.16 Moon phase and illumination in the astronomy section
+
+Extends the existing sunrise/sunset/moonrise/moonset grid with two new rows.
+
+- `moon_phase` (e.g. "Waxing Crescent") displayed with a matching emoji:
+  🌑 New Moon · 🌒 Waxing Crescent · 🌓 First Quarter · 🌔 Waxing Gibbous · 🌕 Full Moon · 🌖 Waning Gibbous · 🌗 Last Quarter · 🌘 Waning Crescent
+- `moon_illumination` shown as `XX% illuminated`
+- Uncomment `moon_phase` and `moon_illumination` in the `Astro` type in `weather-types.ts`
+- **Files:** `WeatherDetail.tsx`, `weather-types.ts`
+- **Effort:** XS
 
 ---
 
 ## Summary Table
 
-| Phase | Category           | Items | Effort  | Priority |
-|-------|--------------------|-------|---------|----------|
-| 1     | Lint / Correctness | 5     | XS      | Highest  |
-| 2     | Code Quality       | 8     | S–M     | High     |
-| 3     | Performance        | 6     | S–M     | High     |
-| 4     | UI / UX            | 12    | S–L     | Medium   |
-| 5     | Advanced Features  | 7     | L–XL    | Low      |
+| Phase | Category                      | Items | Effort | Priority |
+|-------|-------------------------------|-------|--------|----------|
+| 1     | Lint / Correctness            | 5     | XS     | Highest  |
+| 2     | Code Quality                  | 8     | S–M    | High     |
+| 3     | Performance                   | 6     | S–M    | High     |
+| 4     | UI / UX                       | 12    | S–L    | Medium   |
+| 5     | Advanced Features & Redesign  | 16    | S–M    | Medium   |
 
-**Effort key:** XS < 30 min · S < 2 h · M < 1 day · L < 3 days · XL = spike needed
+**Effort key:** XS < 30 min · S < 2 h · M < 1 day · L < 3 days
+
+**Recommended order within Phase 5:**
+1. **5.11** — drag-and-drop (independent, quick win)
+2. **5.2** — °C/°F toggle (do before chart work so it applies everywhere)
+3. **5.8 → 5.9 → 5.10** — API unification first, then visual redesign using the new data
+4. **5.16** — moon phase (trivial, just uncomment types + render)
+5. **5.15** — UV/day stats section
+6. **5.13 + 5.14** — chart redesign and hourly strip together (shared data shape)
+7. **5.12** — autocomplete (most complex)
+8. **5.6 · 5.1 · 5.4 · 5.5** — remaining UX items, any order

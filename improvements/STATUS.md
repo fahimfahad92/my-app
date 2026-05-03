@@ -59,17 +59,29 @@ Items are tracked per plan file. Update status as work is done.
 | 4.11 | Show wind speed and direction on card                          | Done   | `wind_kph` + `wind_dir` added alongside feels-like and humidity in the secondary stats row                                  |
 | 4.12 | Improve responsive grid layout for wide screens                | Done   | Changed to `sm:grid-cols-2 lg:grid-cols-3 max-w-5xl` — prevents cards from stretching on 2K+ screens                       |
 
-### Phase 5 — Advanced Features
+### Phase 5 — Advanced Features & Full UI/UX Redesign
 
-| #   | Item                                                      | Status      | Notes |
-|-----|-----------------------------------------------------------|-------------|-------|
-| 5.1 | Geolocation auto-detection on first visit                 | Not Started |       |
-| 5.2 | Temperature unit toggle (°C / °F)                         | Not Started |       |
-| 5.3 | Weather alerts and severe condition warnings              | Not Started |       |
-| 5.4 | Offline support / stale-while-revalidate                  | Not Started |       |
-| 5.5 | Shareable city watchlist URL                              | Not Started |       |
-| 5.6 | Keyboard shortcut to focus search input                   | Not Started |       |
-| 5.7 | Server-side watchlist persistence for authenticated users | Not Started |       |
+> Server-side caching across users is **already done** — `route.ts` uses Next.js ISR (`revalidate: 300 s`).
+> Phase 6 ideas merged here. `weather_improvement_ideas_002.md` is superseded by this file.
+
+| #    | Item                                                      | Status       | Notes                                                                                         |
+|------|-----------------------------------------------------------|--------------|-----------------------------------------------------------------------------------------------|
+| 5.1  | Geolocation auto-detection on first visit                 | Done         | `navigator.geolocation` on first visit; lat,lon passed as city query; route allows coord format |
+| 5.2  | Temperature unit toggle (°C / °F)                         | Done         | Toggle pill in page header; persisted to `localStorage["tempUnit"]`; prop drills to all cards  |
+| 5.3  | Weather alerts and severe condition warnings              | Skipped      | Not available on WeatherAPI free plan                                                         |
+| 5.4  | Offline support / stale-while-revalidate                  | Done         | `navigator.onLine` + online/offline events; yellow banner shown when offline                  |
+| 5.5  | Shareable city watchlist URL                              | Done         | `useSearchParams`/`useRouter`; cities synced to `?cities=` URL param on change                |
+| 5.6  | Keyboard shortcut `/` to focus search input               | Done         | `keydown` listener on document; `inputRef` prop on `WeatherCitySearchForm`                    |
+| 5.7  | Server-side watchlist persistence for authenticated users | Out of Scope | Do not re-propose                                                                             |
+| 5.8  | Unified `forecast.json?days=1` for the overview card      | Done         | OVERVIEW route now uses `forecast.json?days=1`; card gets max/min + rain chance for free       |
+| 5.9  | Dynamic card backgrounds based on weather condition       | Done         | New `conditionUtils.ts`; condition-code → gradient + isDark flag; night override              |
+| 5.10 | Redesigned card layout (hero temp, badges, icon strip)    | Done         | Hero 5xl temp; rain badge; icon strip (Droplets/Wind/Eye); 4-button footer row                |
+| 5.11 | Drag-and-drop card reordering                             | Done         | HTML5 drag API on wrapper divs in `page.tsx`; `GripVertical` icon on each card                |
+| 5.12 | City search autocomplete (`/search.json`)                 | Done         | New SEARCH route; debounced dropdown; arrow-key nav; Escape to close                          |
+| 5.13 | Redesigned chart — `ComposedChart` area + rain bars       | Done         | `ComposedChart` with Area (temp), Area (feels-like dashed), Bar (rain%); dual Y-axis          |
+| 5.14 | Horizontal hourly scroll strip (iOS-style)                | Done         | `HourlyStrip.tsx`; scrollable row; current-hour highlight; mini rain bar                      |
+| 5.15 | Detail stats section — UV gauge, visibility, wind, precip | Done         | `DayStatsSection.tsx`; UV progress bar with color bands; 2×2 stat grid                        |
+| 5.16 | Moon phase + illumination in astronomy section            | Done         | Emoji mapping in `conditionUtils.ts`; moon phase + illumination % in astro grid               |
 
 ---
 

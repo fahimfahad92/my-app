@@ -3,6 +3,7 @@ export const WEATHER_API_PATHS = {
   API_KEY: process.env.WEATHER_API_API_KEY,
   CURRENT: process.env.WEATHER_API_CURRENT_PATH || "current.json",
   FORECAST: process.env.WEATHER_API_FORECAST_PATH || "forecast.json",
+  SEARCH: "search.json",
 };
 
 export const WEATHER_API_CONSTANT = {
@@ -23,6 +24,8 @@ export const WEATHER_SEARCH_PARAMS = {
   QUERY_DATE: "queryDate",
 };
 
+export const TEMP_UNIT_KEY = "tempUnit";
+
 export const CACHE_TTL_MS = 2 * 60 * 1000;
 export const ISR_REVALIDATE_SECONDS = 300;
 export const MAX_CITIES = 10;
@@ -32,4 +35,5 @@ export const CITY_NAME_PATTERN = /^[a-zA-Z\s\-.]{1,64}$/;
 export enum WEATHER_API_TYPE {
   OVERVIEW = "OVERVIEW",
   DETAIL = "DETAIL",
+  SEARCH = "SEARCH",
 }

@@ -1,117 +1,90 @@
 "use client";
 
-import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from "@/components/ui/card";
-import {ReactElement} from "react";
-import {CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis,} from "recharts";
-import {CustomDotProps, LineChartComponentProps,} from "../types/weather-types";
+import {
+  Area,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {LineChartComponentProps} from "../types/weather-types";
 
-const CustomDot = ({
-                     cx = 0,
-                     cy = 0,
-                     payload,
-                   }: CustomDotProps): ReactElement | null => {
-  const icon = payload?.icon;
-  
-  if (!icon) {
-    return null;
-  }
-  
-  return (
-    <image
-      href={icon}
-      x={cx - 12}
-      y={cy - 12}
-      width={24}
-      height={24}
-      style={{pointerEvents: "none"}}
-    />
-  );
-};
+function formatHour(timeString: string): string {
+  const hhmm = timeString.slice(11, 16);
+  const h = parseInt(hhmm.slice(0, 2), 10);
+  const period = h >= 12 ? "PM" : "AM";
+  return `${h % 12 || 12}${period}`;
+}
 
-export default function LineChartComponent({
-                                             date,
-                                             chartData,
-                                           }: LineChartComponentProps) {
+export default function LineChartComponent({date, chartData, unit}: LineChartComponentProps) {
   if (!chartData?.length) {
-    return (
-      <div className="text-center text-gray-500 text-sm sm:text-base">
-        No data available.
-      </div>
-    );
+    return <div className="text-center text-gray-500 text-sm">No data available.</div>;
   }
-  
-  const formatHour = (timeString: string): string => {
-    // WeatherAPI returns "YYYY-MM-DD HH:mm" in the city's local time.
-    // Extract the time directly — avoids browser timezone conversion from new Date().
-    const hhmm = timeString.slice(11, 16);
-    const [hStr, mStr] = hhmm.split(":");
-    const h = parseInt(hStr, 10);
-    const period = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${mStr} ${period}`;
-  };
-  
-  const processedData = chartData.map((item) => ({
-    hour: formatHour(item.hour),
-    temp: item.temp,
-    icon: item.icon,
-  }));
-  
+
+  const tempKey = unit === "C" ? "temp" : "temp_f";
+  const feelsKey = unit === "C" ? "feelslike_c" : "feelslike_f";
+  const unitLabel = unit === "C" ? "°C" : "°F";
+
+  const processedData = chartData
+    .filter((_, i) => i % 3 === 0)
+    .map((item) => ({
+      hour: formatHour(item.hour),
+      temp: unit === "C" ? item.temp : item.temp_f,
+      feelslike: unit === "C" ? item.feelslike_c : item.feelslike_f,
+      chance_of_rain: item.chance_of_rain,
+      icon: item.icon,
+    }));
+
+  // suppress unused variable warnings — these are used as recharts dataKey strings
+  void tempKey;
+  void feelsKey;
+
   return (
-    <div className="max-w-[95vw] max-h-[70vh]">
-      <div>
-        <Card className="shadow-md">
-          <CardHeader className="px-4 sm:px-6 md:px-8">
-            <CardTitle className="text-base sm:text-lg md:text-xl">
-              Today&acute;s Temperature
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              {date}
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="px-2 sm:px-4 md:px-6">
-            <div className="w-full h-64">
-              <ResponsiveContainer>
-                <LineChart
-                  data={processedData}
-                  margin={{top: 10, right: 5, left: 5, bottom: 20}}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                  
-                  <XAxis
-                    dataKey="hour"
-                    tickMargin={20}
-                    className="text-xs sm:text-sm"
-                  />
-                  
-                  <Tooltip
-                    content={({active, payload, label}) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white p-2 rounded shadow text-sm text-gray-800">
-                            <p className="font-medium">{label}</p>
-                            <p>{payload[0].value}°C</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  
-                  <Line
-                    type="monotone"
-                    dataKey="temp"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    dot={<CustomDot/>}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+    <div>
+      <p className="text-base font-semibold text-gray-800 mb-1">{date} — Hourly Temperature</p>
+      <div className="w-full h-56">
+        <ResponsiveContainer>
+          <ComposedChart data={processedData} margin={{top: 10, right: 10, left: -10, bottom: 5}}>
+            <defs>
+              <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="rgb(59,130,246)" stopOpacity={0.6}/>
+                <stop offset="95%" stopColor="rgb(59,130,246)" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb"/>
+
+            <XAxis dataKey="hour" tick={{fontSize: 11}} tickMargin={6}/>
+            <YAxis yAxisId="temp" tick={{fontSize: 11}} tickFormatter={(v) => `${v}${unitLabel}`} width={42}/>
+            <YAxis yAxisId="rain" orientation="right" tick={{fontSize: 11}} tickFormatter={(v) => `${v}%`} domain={[0, 100]} width={36}/>
+
+            <Tooltip
+              content={({active, payload, label}) => {
+                if (!active || !payload?.length) return null;
+                const temp = payload.find((p) => p.dataKey === "temp")?.value;
+                const feelslike = payload.find((p) => p.dataKey === "feelslike")?.value;
+                const rain = payload.find((p) => p.dataKey === "chance_of_rain")?.value;
+                return (
+                  <div className="bg-white border border-gray-200 rounded-lg p-2 shadow text-xs text-gray-800 space-y-0.5">
+                    <p className="font-semibold">{label}</p>
+                    {temp !== undefined && <p>Temp: {temp}{unitLabel}</p>}
+                    {feelslike !== undefined && <p>Feels like: {feelslike}{unitLabel}</p>}
+                    {rain !== undefined && <p>Rain: {rain}%</p>}
+                  </div>
+                );
+              }}
+            />
+
+            <Bar yAxisId="rain" dataKey="chance_of_rain" fill="rgba(59,130,246,0.25)" radius={[3, 3, 0, 0]} barSize={16}/>
+            <Area yAxisId="temp" type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={2} fill="url(#tempGradient)" dot={false}/>
+            <Area yAxisId="temp" type="monotone" dataKey="feelslike" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 2" fill="none" dot={false}/>
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
+      <p className="text-xs text-gray-400 mt-1 text-center">— Temp · - - Feels like · bars = rain chance</p>
     </div>
   );
 }

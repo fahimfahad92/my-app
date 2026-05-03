@@ -99,11 +99,11 @@ Items are tracked per plan file. Update status as work is done.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 3.1 | Memoize `ClockCard` with `React.memo` | Not Started | |
-| 3.2 | Memoize `ClockList` with `React.memo` | Not Started | |
-| 3.3 | Memoize `highlight` helper in `TimezoneSelector` | Not Started | |
-| 3.4 | Change clock update interval from 60 s → 1 s | Not Started | |
-| 3.5 | Guard Statsig page-view event with `hasFired` ref | Not Started | |
+| 3.1 | Memoize `ClockCard` with `React.memo` | Done | Changed `onRemove` signature so the prop ref is stable across renders |
+| 3.2 | Memoize `ClockList` with `React.memo` | Done | |
+| 3.3 | Memoize `highlight` helper in `TimezoneSelector` | Done | Hoisted regex via `useMemo`; wrapped highlight in `useCallback`; added regex escaping |
+| 3.4 | Change clock update interval from 60 s → 1 s | Done | Display now includes seconds, justifying the 1 s tick |
+| 3.5 | Guard Statsig page-view event with `hasFired` ref | Done | Implemented during Phase 1.2 |
 
 ### Phase 4 — UI / UX
 

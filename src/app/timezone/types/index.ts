@@ -2,7 +2,7 @@ export type Timezone = string;
 
 export interface ClockCardProps {
   timezone: Timezone;
-  onRemove: () => void;
+  onRemove: (tz: Timezone) => void;
 }
 
 export interface ClockListProps {

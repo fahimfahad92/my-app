@@ -1,32 +1,37 @@
 "use client";
 
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Check} from "lucide-react";
 import {useDebounce} from "@/app/hooks/useDebounce";
+import type {TimezoneSelectorProps} from "@/app/timezone/types";
+
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export default function TimezoneSelector({
                                            options,
                                            selected,
                                            onAdd,
-                                         }: {
-  options: string[];
-  selected: string[];
-  onAdd: (tz: string) => void;
-}) {
+                                         }: TimezoneSelectorProps) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [open, setOpen] = useState(false);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query);
-  
+
   const filtered = useMemo(() => {
     if (!debouncedQuery) return options;
-    return options.filter((tz) =>
-      tz.toLowerCase().includes(debouncedQuery.toLowerCase())
-    );
+    const lower = debouncedQuery.toLowerCase();
+    return options.filter((tz) => tz.toLowerCase().includes(lower));
   }, [debouncedQuery, options]);
-  
+
+  const highlightRegex = useMemo(
+    () => (debouncedQuery ? new RegExp(`(${escapeRegex(debouncedQuery)})`, "ig") : null),
+    [debouncedQuery]
+  );
+
   // Close on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -37,21 +42,24 @@ export default function TimezoneSelector({
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
-  
-  const highlight = (text: string, q: string) => {
-    if (!q) return text;
-    const regex = new RegExp(`(${q})`, "ig");
-    
-    return text.split(regex).map((part, i) =>
-      part.toLowerCase() === q.toLowerCase() ? (
-        <span key={i} className="font-semibold">
-          {part}
-        </span>
-      ) : (
-        part
-      )
-    );
-  };
+
+  const highlight = useCallback(
+    (text: string) => {
+      if (!highlightRegex) return text;
+      const lowerQuery = debouncedQuery.toLowerCase();
+
+      return text.split(highlightRegex).map((part, i) =>
+        part.toLowerCase() === lowerQuery ? (
+          <span key={i} className="font-semibold">
+            {part}
+          </span>
+        ) : (
+          part
+        )
+      );
+    },
+    [highlightRegex, debouncedQuery]
+  );
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!filtered.length) return;
@@ -128,7 +136,7 @@ export default function TimezoneSelector({
                     : "hover:bg-gray-50"
                 }`}
               >
-                <span>{highlight(tz, debouncedQuery)}</span>
+                <span>{highlight(tz)}</span>
                 
                 {selected.includes(tz) && (
                   <Check size={16} className="text-green-500"/>

@@ -9,10 +9,11 @@ import WeatherDetail from "./WeatherDetail";
 
 import {memo, useEffect, useState} from "react";
 import {CardSkeleton} from "@/app/weather/component/Skeletons";
-import {getFromLocalStorage} from "@/app/util/LocalStorageHelper";
 import {logger} from "@/app/util/logger";
 
+const MAX_CACHE_SIZE = 20;
 const overviewCache = new Map<string, { data: WeatherResponse; ts: number }>();
+const pendingRequests = new Map<string, Promise<WeatherResponse>>();
 
 function WeatherCard({
                        cityName,
@@ -20,55 +21,72 @@ function WeatherCard({
                        addToWatchList,
                        removeFromWatchList,
                        fixCity,
+                       isSaved,
                      }: {
   cityName: string;
   removeCity: (data: string) => void;
   addToWatchList: (data: string) => void;
   removeFromWatchList: (data: string) => void;
   fixCity: (prevCity: string, updatedCity: string) => void;
+  isSaved: boolean;
 }) {
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isHighlighted, setIsHighlighted] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
 
   const fetchData = async (isUpdate: boolean) => {
+    const cacheKey = cityName.trim().toLowerCase();
     try {
-      const cacheKey = cityName.trim().toLowerCase();
       if (!isUpdate) {
         const cached = overviewCache.get(cacheKey);
         if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
           setData(cached.data);
-          setLoading(false);
           toast.success(`Loaded cached data for ${cityName}`);
           return;
         }
+
+        // 3.5: Reuse an in-flight request for the same city instead of firing a duplicate
+        const inflight = pendingRequests.get(cacheKey);
+        if (inflight) {
+          const result = await inflight;
+          setData(result);
+          return;
+        }
       }
-      
+
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
         type: WEATHER_API_TYPE.OVERVIEW,
       });
-      
-      const url = `${
-        WEATHER_API_CONSTANT.BASE_ROUTE_URL
-      }?${urlParams.toString()}`;
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Something went wrong");
-      }
-      
-      const result: WeatherResponse = await response.json();
-      setData(result);
-      // update cache
-      overviewCache.set(cityName.trim().toLowerCase(), {
-        data: result,
-        ts: Date.now(),
+      const url = `${WEATHER_API_CONSTANT.BASE_ROUTE_URL}?${urlParams.toString()}`;
+
+      const promise: Promise<WeatherResponse> = fetch(url).then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Something went wrong");
+        }
+        return response.json() as Promise<WeatherResponse>;
       });
+
+      if (!isUpdate) pendingRequests.set(cacheKey, promise);
+
+      let result: WeatherResponse;
+      try {
+        result = await promise;
+      } finally {
+        pendingRequests.delete(cacheKey);
+      }
+
+      setData(result);
+
+      // 3.1: Evict the oldest entry when the cache reaches capacity
+      if (overviewCache.size >= MAX_CACHE_SIZE) {
+        const oldest = overviewCache.keys().next().value;
+        if (oldest !== undefined) overviewCache.delete(oldest);
+      }
+      overviewCache.set(cacheKey, {data: result, ts: Date.now()});
+
       if (cityName !== result.location.name.toLowerCase()) {
         fixCity(cityName, result.location.name);
       }
@@ -84,19 +102,15 @@ function WeatherCard({
       setLoading(false);
     }
   };
-  
-  
+
+
   useEffect(() => {
     if (!cityName) return;
     setError(null);
     fetchData(false);
-    
-    // reflect watch list state
-    const watch = getFromLocalStorage<string>("watchList").map((c) => c?.trim().toLowerCase());
-    setIsSaved(watch.includes(cityName.trim().toLowerCase()));
-    
-    setIsHighlighted(true); // Highlight on mount/update
-    const timer = setTimeout(() => setIsHighlighted(false), 2000); // Remove after 2s
+
+    setIsHighlighted(true);
+    const timer = setTimeout(() => setIsHighlighted(false), 2000);
     return () => clearTimeout(timer);
   }, [cityName]);
   
@@ -209,10 +223,7 @@ function WeatherCard({
             variant={isSaved ? "secondary" : "default"}
             size="sm"
             onClick={() => {
-              if (!isSaved) {
-                addToWatchList(cityName);
-                setIsSaved(true);
-              }
+              if (!isSaved) addToWatchList(cityName);
             }}
             className="center"
             aria-label={isSaved ? "Already in watch list" : "Add city to watch list"}

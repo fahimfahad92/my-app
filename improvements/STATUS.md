@@ -33,14 +33,14 @@ Items are tracked per plan file. Update status as work is done.
 
 ### Phase 3 — Performance
 
-| #   | Item                                                              | Status      | Notes |
-|-----|-------------------------------------------------------------------|-------------|-------|
-| 3.1 | Add max size + eviction to `overviewCache` in `WeatherCard.tsx`   | Not Started |       |
-| 3.2 | Guard Statsig page-view event with `hasFired` ref                 | Not Started |       |
-| 3.3 | Consolidate cascading `useEffect` hooks in `weather/page.tsx`     | Not Started |       |
-| 3.4 | Fix stale `isSaved` state in `WeatherCard` when watchlist changes | Not Started |       |
-| 3.5 | Deduplicate in-flight requests for the same city                  | Not Started |       |
-| 3.6 | Fix timezone-unsafe time rendering in `LineChartComponent.tsx:44` | Not Started |       |
+| #   | Item                                                              | Status | Notes                                                                                                                               |
+|-----|-------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 3.1 | Add max size + eviction to `overviewCache` in `WeatherCard.tsx`   | Done   | Cap at 20; delete insertion-ordered oldest entry on overflow                                                                        |
+| 3.2 | Guard Statsig page-view event with `hasFired` ref                 | Done   | Separated into its own effect with `hasFired` ref; fires exactly once                                                               |
+| 3.3 | Consolidate cascading `useEffect` hooks in `weather/page.tsx`     | Done   | Init effect now has `[]` deps (no `logEvent`); Statsig event is its own effect; city-add effect unchanged                           |
+| 3.4 | Fix stale `isSaved` state in `WeatherCard` when watchlist changes | Done   | `isSaved` moved to prop driven by `watchList` state in parent; `addToWatchList`/`removeFromWatchList` update state via `setWatchList` |
+| 3.5 | Deduplicate in-flight requests for the same city                  | Done   | Module-level `pendingRequests` Map; second card awaits existing promise instead of firing a duplicate fetch                          |
+| 3.6 | Fix timezone-unsafe time rendering in `LineChartComponent.tsx:44` | Done   | Replaced `new Date(timeString).toLocaleTimeString()` with direct `slice(11,16)` extraction — no browser-timezone conversion          |
 
 ### Phase 4 — UI / UX
 

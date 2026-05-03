@@ -1,7 +1,7 @@
 "use client";
 
 import {BookmarkPlus, Info, ListCollapse, RefreshCcw, Trash2,} from "lucide-react";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
 import WeatherCard from "./component/WeatherCard";
 import WeatherCitySearchForm from "./component/WeatherCitySearchForm";
@@ -20,8 +20,11 @@ const WEATHER_EVENT: WeatherEventName = "myapp_pv_weather";
 export default function WeatherApp() {
   const [cityName, setCityName] = useState("");
   const [cities, setCities] = useState<string[]>([]);
+  const [watchList, setWatchList] = useState<string[]>([]);
   const {logEvent} = useStatsigEvents();
+  const hasFired = useRef(false);
 
+  // 3.3: Dedicated init effect — load from localStorage only, no logEvent dep
   useEffect(() => {
     logger.info("Initializing cities from local storage");
     const stored = getFromLocalStorage<string>("watchList");
@@ -29,6 +32,13 @@ export default function WeatherApp() {
       new Set((stored || []).map((c) => c?.trim().toLowerCase()).filter(Boolean))
     );
     setCities(normalized);
+    setWatchList(normalized);
+  }, []);
+
+  // 3.2: Page-view event fires once, guarded by hasFired ref
+  useEffect(() => {
+    if (hasFired.current) return;
+    hasFired.current = true;
     const meta: WeatherEventMetadata = {page: "weather"};
     logEvent(WEATHER_EVENT, meta);
   }, [logEvent]);
@@ -57,22 +67,22 @@ export default function WeatherApp() {
   
   const addToWatchList = useCallback((cityName: string) => {
     const normalized = cityName.trim().toLowerCase();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    const watchList = getFromLocalStorage("watchList").map((c: string) => c.trim().toLowerCase());
-    if (watchList.includes(normalized)) {
+    const current = getFromLocalStorage<string>("watchList").map((c) => c.trim().toLowerCase());
+    if (current.includes(normalized)) {
       logger.info(`${cityName} is already in the watch list`);
       toast.error(`${cityName} is already in the watch list`);
       return;
     }
     setItemInLocalStorageAsArray("watchList", normalized);
+    setWatchList((prev) => [...prev, normalized]);
     logger.info(`${cityName} added to watch list`);
     toast.success(`${cityName} added to watch list`);
   }, []);
-  
+
   const removeFromWatchList = useCallback((cityName: string) => {
     const normalized = cityName.trim().toLowerCase();
     removeItemFromLocalStorageArray("watchList", normalized);
+    setWatchList((prev) => prev.filter((c) => c !== normalized));
     removeCity(normalized);
     toast.info(`${cityName} removed`);
   }, [removeCity]);
@@ -152,6 +162,7 @@ export default function WeatherApp() {
                   addToWatchList={addToWatchList}
                   removeFromWatchList={removeFromWatchList}
                   fixCity={fixCity}
+                  isSaved={watchList.includes(city)}
                 />
               </div>
             ) : null

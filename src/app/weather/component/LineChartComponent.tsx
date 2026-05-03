@@ -40,13 +40,15 @@ export default function LineChartComponent({
     );
   }
   
-  const formatHour = (timeString: string) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
+  const formatHour = (timeString: string): string => {
+    // WeatherAPI returns "YYYY-MM-DD HH:mm" in the city's local time.
+    // Extract the time directly — avoids browser timezone conversion from new Date().
+    const hhmm = timeString.slice(11, 16);
+    const [hStr, mStr] = hhmm.split(":");
+    const h = parseInt(hStr, 10);
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${mStr} ${period}`;
   };
   
   const processedData = chartData.map((item) => ({

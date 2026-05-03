@@ -44,20 +44,20 @@ Items are tracked per plan file. Update status as work is done.
 
 ### Phase 4 — UI / UX
 
-| #    | Item                                                           | Status      | Notes |
-|------|----------------------------------------------------------------|-------------|-------|
-| 4.1  | Add "Last updated" timestamp to `WeatherCard`                  | Not Started |       |
-| 4.2  | Add Retry button in `WeatherDetail` on error                   | Not Started |       |
-| 4.3  | Show inline validation feedback in search form                 | Not Started |       |
-| 4.4  | Clarify "Add to Watchlist" vs "Remove from Page" distinction   | Not Started |       |
-| 4.5  | Show weather condition description text on card                | Not Started |       |
-| 4.6  | Add feels-like temperature and humidity to `WeatherCard`       | Not Started |       |
-| 4.7  | Add multi-day forecast tabs to `WeatherDetail`                 | Not Started |       |
-| 4.8  | Add empty state with prompt when no city searched              | Not Started |       |
-| 4.9  | Limit watchlist/active cities with user feedback               | Not Started |       |
-| 4.10 | Make card highlight animation opt-out for reduced-motion users | Not Started |       |
-| 4.11 | Show wind speed and direction on card                          | Not Started |       |
-| 4.12 | Improve responsive grid layout for wide screens                | Not Started |       |
+| #    | Item                                                           | Status | Notes                                                                                                                       |
+|------|----------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------|
+| 4.1  | Add "Last updated" timestamp to `WeatherCard`                  | Done   | Live "Updated X min ago" using `last_updated_epoch`; ticks every 60 s via `setInterval`                                    |
+| 4.2  | Add Retry button in `WeatherDetail` on error                   | Done   | Error state now shows message + Retry button that re-calls `fetchData()`                                                    |
+| 4.3  | Show inline validation feedback in search form                 | Done   | Implemented in Phase 2.6 (RHF pattern rule + inline `role="alert"` message)                                                |
+| 4.4  | Clarify "Add to Watchlist" vs "Remove from Page" distinction   | Done   | X = dismiss from page (watchlist unchanged); bookmark toggles watchlist (BookmarkPlus / BookmarkMinus); Trash2 removed       |
+| 4.5  | Show weather condition description text on card                | Done   | `condition.text` shown as small label below the weather icon                                                                |
+| 4.6  | Add feels-like temperature and humidity to `WeatherCard`       | Done   | Secondary stats row: feels-like \| humidity \| wind (grouped with 4.11)                                                    |
+| 4.7  | Add multi-day forecast tabs to `WeatherDetail`                 | Done   | Route now passes `days=3`; dialog shows Today/Tomorrow/Day-3 tab buttons; chart + astro update per selected tab             |
+| 4.8  | Add empty state with prompt when no city searched              | Done   | Centered Cloud icon + hint text when `cities.length === 0`                                                                  |
+| 4.9  | Limit watchlist/active cities with user feedback               | Done   | `MAX_CITIES = 10` in constants; toast.warning shown when cap is reached                                                     |
+| 4.10 | Make card highlight animation opt-out for reduced-motion users | Done   | Scale class changed to `motion-safe:scale-[1.02]`                                                                          |
+| 4.11 | Show wind speed and direction on card                          | Done   | `wind_kph` + `wind_dir` added alongside feels-like and humidity in the secondary stats row                                  |
+| 4.12 | Improve responsive grid layout for wide screens                | Done   | Changed to `sm:grid-cols-2 lg:grid-cols-3 max-w-5xl` — prevents cards from stretching on 2K+ screens                       |
 
 ### Phase 5 — Advanced Features
 

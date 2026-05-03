@@ -1,6 +1,6 @@
 "use client";
 
-import {BookmarkPlus, Info, ListCollapse, RefreshCcw, Trash2,} from "lucide-react";
+import {BookmarkPlus, Cloud, Info, ListCollapse, RefreshCcw, Trash2,} from "lucide-react";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
 import WeatherCard from "./component/WeatherCard";
@@ -14,6 +14,7 @@ import HomeComponent from "@/app/weather/component/HomeComponent";
 import {logger} from "@/app/util/logger";
 import {useStatsigEvents} from "@/components/statsig-event";
 import type {WeatherEventMetadata, WeatherEventName} from "@/app/weather/types/weather-types";
+import {MAX_CITIES} from "@/app/weather/constants/weather-constants";
 
 const WEATHER_EVENT: WeatherEventName = "myapp_pv_weather";
 
@@ -51,6 +52,11 @@ export default function WeatherApp() {
       if (prevCities.includes(normalizedCity)) {
         toast.info(`${cityName} is already shown below`);
         return [...prevCities];
+      }
+      // 4.9: Enforce city cap with user feedback
+      if (prevCities.length >= MAX_CITIES) {
+        toast.warning(`Maximum ${MAX_CITIES} cities reached. Remove one to add more.`);
+        return prevCities;
       }
       logger.info("City updated for " + cityName);
       const meta: WeatherEventMetadata = {page: "weather", city: normalizedCity, action: "add"};
@@ -152,7 +158,16 @@ export default function WeatherApp() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-7xl">
+        {/* 4.8: Empty state */}
+        {cities.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-3 text-gray-400">
+            <Cloud className="w-16 h-16 opacity-30"/>
+            <p className="text-base">Search for a city above to see its current weather</p>
+          </div>
+        )}
+
+        {/* 4.12: auto-fill grid keeps cards from stretching on 2K+ screens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-5xl mx-auto">
           {cities.map((city) =>
             city ? (
               <div key={city} className="p-2">

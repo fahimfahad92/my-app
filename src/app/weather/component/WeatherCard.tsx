@@ -1,19 +1,25 @@
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
-import {BookmarkPlus, RefreshCcw, Trash2} from "lucide-react";
+import {BookmarkMinus, BookmarkPlus, RefreshCcw, X} from "lucide-react";
 import {toast} from "sonner";
 import {CACHE_TTL_MS, WEATHER_API_CONSTANT, WEATHER_API_TYPE,} from "../constants/weather-constants";
 import {WeatherResponse} from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
-
 import {memo, useEffect, useState} from "react";
 import {CardSkeleton} from "@/app/weather/component/Skeletons";
 import {logger} from "@/app/util/logger";
+import {cn} from "@/lib/utils";
 
 const MAX_CACHE_SIZE = 20;
 const overviewCache = new Map<string, { data: WeatherResponse; ts: number }>();
 const pendingRequests = new Map<string, Promise<WeatherResponse>>();
+
+function getTimeSince(epochSeconds: number): string {
+  const diffMin = Math.floor((Date.now() - epochSeconds * 1000) / 60000);
+  if (diffMin < 1) return "Just now";
+  return `${diffMin} min ago`;
+}
 
 function WeatherCard({
                        cityName,
@@ -34,6 +40,7 @@ function WeatherCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isHighlighted, setIsHighlighted] = useState(false);
+  const [lastUpdatedText, setLastUpdatedText] = useState("Just now");
 
   const fetchData = async (isUpdate: boolean) => {
     const cacheKey = cityName.trim().toLowerCase();
@@ -46,7 +53,6 @@ function WeatherCard({
           return;
         }
 
-        // 3.5: Reuse an in-flight request for the same city instead of firing a duplicate
         const inflight = pendingRequests.get(cacheKey);
         if (inflight) {
           const result = await inflight;
@@ -80,7 +86,6 @@ function WeatherCard({
 
       setData(result);
 
-      // 3.1: Evict the oldest entry when the cache reaches capacity
       if (overviewCache.size >= MAX_CACHE_SIZE) {
         const oldest = overviewCache.keys().next().value;
         if (oldest !== undefined) overviewCache.delete(oldest);
@@ -103,134 +108,136 @@ function WeatherCard({
     }
   };
 
-
   useEffect(() => {
     if (!cityName) return;
     setError(null);
     fetchData(false);
-
     setIsHighlighted(true);
     const timer = setTimeout(() => setIsHighlighted(false), 2000);
     return () => clearTimeout(timer);
   }, [cityName]);
-  
-  // Move side-effects out of render: handle error via effect
+
   useEffect(() => {
     if (!error) return;
     toast.error(`Error: ${error}`);
     removeCity(cityName);
   }, [error, cityName, removeCity]);
-  
+
+  // 4.1: Live "updated X min ago" counter, ticks every minute
+  useEffect(() => {
+    if (!data) return;
+    const epoch = data.current.last_updated_epoch;
+    setLastUpdatedText(getTimeSince(epoch));
+    const id = setInterval(() => setLastUpdatedText(getTimeSince(epoch)), 60000);
+    return () => clearInterval(id);
+  }, [data]);
+
   const refreshData = () => {
-    if (!cityName || cityName === "") return;
+    if (!cityName) return;
     setError(null);
     fetchData(true);
   };
-  
+
   if (loading) return <CardSkeleton/>;
-  if (error) {
-    return null;
-  }
+  if (error) return null;
   if (!data) return null;
-  
+
   return (
     <div
-      className={`flex justify-center p-6 transition-all ${
-        isHighlighted
-          ? "font-bold scale-[1.02] bg-blue-200 rounded-2xl" // Highlighted
-          : "bg-gray-50" // Normal
-      }`}
+      className={cn(
+        "flex justify-center p-4 transition-all",
+        // 4.10: Scale animation opt-out for reduced-motion users
+        isHighlighted ? "font-bold motion-safe:scale-[1.02] bg-blue-200 rounded-2xl" : "bg-gray-50"
+      )}
     >
-      <Card
-        className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-2xl shadow-md border border-gray-200 bg-white">
-        <CardHeader className="flex flex-col items-center text-center space-y-2">
-          <CardTitle className="text-xl font-semibold text-gray-800">
+      <Card className="w-full max-w-sm rounded-2xl shadow-md border border-gray-200 bg-white">
+        <CardHeader className="flex flex-col items-center text-center space-y-1 pb-2">
+          <CardTitle className="text-lg font-semibold text-gray-800">
             {data.location.name}
           </CardTitle>
-          <CardDescription className="text-sm text-gray-500">
+          <CardDescription className="text-xs text-gray-500">
             {data.location.country}
           </CardDescription>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            className="mx-auto w-16 h-16"
+            className="mx-auto w-14 h-14"
             src={data.current.condition.icon}
             alt={data.current.condition.text}
           />
+          {/* 4.5: Condition description text */}
+          <p className="text-sm text-gray-600">{data.current.condition.text}</p>
         </CardHeader>
-        
-        <CardContent className="px-6 pb-4 space-y-2">
-          <div className="flex flex-col space-y-1.5 items-center">
-            <p className="text-sm text-gray-500">Timezone</p>
-            <Label className="text-base font-medium text-gray-700">
-              {data.location.tz_id}
-            </Label>
-          </div>
-          <div className="flex flex-col space-y-1.5 items-center">
-            <p className="text-sm text-gray-500">Local Time</p>
-            <Label className="text-base font-medium text-gray-700">
-              {data.location.localtime}
-            </Label>
-          </div>
-          <div className="flex flex-col space-y-1.5 items-center">
-            <p className="text-sm text-gray-500">Last Updated</p>
-            <Label className="text-base font-medium text-gray-700">
-              {data.current.last_updated}
-            </Label>
-          </div>
-          <div className="flex flex-col space-y-1.5 items-center">
-            <p className="text-sm text-gray-500">Time of Day</p>
-            <Label className="text-base font-medium text-gray-700">
-              {data.current.is_day ? "Day" : "Night"}
-            </Label>
-          </div>
-          <div className="flex flex-col space-y-1.5 items-center">
-            <p className="text-sm text-gray-500">Temperature</p>
-            <Label className="text-xl font-semibold text-blue-600">
+
+        <CardContent className="px-4 pb-3 space-y-3">
+          <p className="text-center text-xs text-gray-400">
+            {data.location.tz_id}
+            <span className="mx-1">·</span>
+            {data.location.localtime}
+          </p>
+
+          <div className="text-center">
+            <Label className="text-3xl font-bold text-blue-600">
               {data.current.temp_c}°C
             </Label>
           </div>
+
+          {/* 4.6 + 4.11: Feels-like, humidity, wind in a compact secondary row */}
+          <div className="grid grid-cols-3 gap-1 text-center">
+            <div>
+              <p className="text-sm font-medium text-gray-700">{data.current.feelslike_c}°C</p>
+              <p className="text-xs text-gray-400">Feels like</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700">{data.current.humidity}%</p>
+              <p className="text-xs text-gray-400">Humidity</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700">{data.current.wind_kph} {data.current.wind_dir}</p>
+              <p className="text-xs text-gray-400">Wind (kph)</p>
+            </div>
+          </div>
+
+          {/* 4.1: Live "updated X min ago" timestamp */}
+          <p className="text-center text-xs text-gray-400">Updated {lastUpdatedText}</p>
         </CardContent>
-        
-        <CardFooter className="grid grid-cols-2 space-x-2 space-y-2 items-center justify-between text-sm">
+
+        <CardFooter className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={refreshData}
-            className="center"
             aria-label="Refresh weather data"
             title="Refresh weather data"
           >
-            {/* Refresh */}
-            <RefreshCcw/>
+            <RefreshCcw className="w-4 h-4"/>
           </Button>
-          
+
           <WeatherDetail
             cityName={cityName}
             localTimeEpoch={data.location.localtime_epoch}
             tzId={data.location.tz_id}
           />
-          
+
+          {/* 4.4: Dismiss from page only — does not remove from watchlist */}
           <Button
-            variant="destructive"
+            variant="outline"
             size="sm"
-            onClick={() => removeFromWatchList(cityName)}
-            className="center"
-            aria-label="Remove city from watch list"
-            title="Remove city from watch list"
+            onClick={() => removeCity(cityName)}
+            aria-label="Dismiss from page"
+            title="Dismiss from page (watchlist unchanged)"
           >
-            <Trash2 className="w-4 h-4 mr-2"/>
+            <X className="w-4 h-4"/>
           </Button>
+
+          {/* 4.4: Bookmark toggle — add or remove from watchlist */}
           <Button
-            variant={isSaved ? "secondary" : "default"}
+            variant={isSaved ? "destructive" : "default"}
             size="sm"
-            onClick={() => {
-              if (!isSaved) addToWatchList(cityName);
-            }}
-            className="center"
-            aria-label={isSaved ? "Already in watch list" : "Add city to watch list"}
-            title={isSaved ? "Already in watch list" : "Add city to watch list"}
-            disabled={isSaved}
+            onClick={() => isSaved ? removeFromWatchList(cityName) : addToWatchList(cityName)}
+            aria-label={isSaved ? "Remove from watchlist" : "Save to watchlist"}
+            title={isSaved ? "Remove from watchlist" : "Save to watchlist"}
           >
-            <BookmarkPlus className="w-4 h-4 mr-2"/>
+            {isSaved ? <BookmarkMinus className="w-4 h-4"/> : <BookmarkPlus className="w-4 h-4"/>}
           </Button>
         </CardFooter>
       </Card>

@@ -63,9 +63,7 @@ export async function GET(request: NextRequest) {
         );
       }
       
-      url = `${BASE_URL}${path}?${API_KEY}&q=${encodeURIComponent(
-        cityName
-      )}&dt=${queryDate}`;
+      url = `${BASE_URL}${path}?${API_KEY}&q=${encodeURIComponent(cityName)}&dt=${queryDate}&days=3`;
     }
     
     // Fetch and return weather data with ISR revalidation

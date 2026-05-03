@@ -25,6 +25,7 @@ export const WEATHER_SEARCH_PARAMS = {
 
 export const CACHE_TTL_MS = 2 * 60 * 1000;
 export const ISR_REVALIDATE_SECONDS = 300;
+export const MAX_CITIES = 10;
 
 export const CITY_NAME_PATTERN = /^[a-zA-Z\s\-.]{1,64}$/;
 

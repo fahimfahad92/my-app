@@ -109,16 +109,16 @@ Items are tracked per plan file. Update status as work is done.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 4.1 | Display date alongside time in `ClockCard` | Not Started | |
-| 4.2 | Show UTC offset in `ClockCard` | Not Started | |
-| 4.3 | Improve empty state UX | Not Started | |
-| 4.4 | Add drag-to-reorder for clock cards | Not Started | |
-| 4.5 | Animate card entry and exit | Not Started | |
-| 4.6 | Replace "Remove" text button with icon button | Not Started | |
-| 4.7 | Distinguish day-vs-night visually on each card | Not Started | |
-| 4.8 | Highlight user's local timezone with "Local" badge | Not Started | |
-| 4.9 | Add max-timezone guard with user feedback | Not Started | |
-| 4.10 | Improve responsive layout for large screens | Not Started | |
+| 4.1 | Display date alongside time in `ClockCard` | Done | Weekday + month + day, in same timezone |
+| 4.2 | Show UTC offset in `ClockCard` | Done | Computed via `Intl.DateTimeFormat` `shortOffset` |
+| 4.3 | Improve empty state UX | Done | Centered Clock icon + dashed border + hint text |
+| 4.4 | Add drag-to-reorder for clock cards | Done | Native HTML5 drag API, no extra deps; `reorderTimezones` in page.tsx |
+| 4.5 | Animate card entry and exit | Done (entry only) | `tw-animate-css` fade-in + slide-in-from-bottom; exit skipped (would need state machine or library) |
+| 4.6 | Replace "Remove" text button with icon button | Done | Lucide `X` icon, top-right, opacity-0 → 100 on hover/focus |
+| 4.7 | Distinguish day-vs-night visually on each card | Done | `bg-sky-50` for 6am–6pm, `bg-slate-800` otherwise |
+| 4.8 | Highlight user's local timezone with "Local" badge | Done | Detected via `Intl.DateTimeFormat().resolvedOptions().timeZone` |
+| 4.9 | Add max-timezone guard with user feedback | Done | Soft cap at 12; warns via Sonner toast |
+| 4.10 | Improve responsive layout for large screens | Done | `max-w-4xl` + `sm:grid-cols-2 md:grid-cols-3` |
 
 ### Phase 5 — Advanced Features
 

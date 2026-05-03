@@ -1,28 +1,27 @@
 "use client";
 
-import {StatsigProvider} from "@statsig/react-bindings";
+import {StatsigProvider, StatsigUser} from "@statsig/react-bindings";
 import {StatsigAutoCapturePlugin} from '@statsig/web-analytics';
-import {useEffect, useState} from "react";
+import {ReactNode, useEffect, useState} from "react";
 
 import {getBrowserUserId, getBrowserUserInfo} from "../_lib/statsig-util";
+import {logger} from "@/app/util/logger";
 
-export default function StatsigProviderWrapper({children}) {
+export default function StatsigProviderWrapper({children}: {children: ReactNode}) {
 
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState<StatsigUser | null>(null);
 
     useEffect(() => {
 
         const deviceInfo = getBrowserUserInfo();
         const userId = getBrowserUserId();
 
-        const newUser = {
+        const newUser: StatsigUser = {
             userID: userId,
-            custom: {
-                ...deviceInfo,
-            },
+            custom: deviceInfo as StatsigUser["custom"],
         };
 
-        console.log("Statsig user:", newUser);
+        logger.log("Statsig user:", newUser);
 
         setUser(newUser);
 
@@ -32,9 +31,8 @@ export default function StatsigProviderWrapper({children}) {
 
     return (
         <StatsigProvider
-            sdkKey={process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY}
+            sdkKey={process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY!}
             user={user}
-            waitForInitialization={true}
             options={{plugins: [new StatsigAutoCapturePlugin()]}}
         >
             {children}

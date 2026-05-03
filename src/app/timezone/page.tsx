@@ -1,38 +1,44 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import TimezoneSelector from "@/app/timezone/component/TimezoneSelector";
 import ClockList from "@/app/timezone/component/ClockList";
 import HomeComponent from "@/app/weather/component/HomeComponent";
 import {TIMEZONES} from "@/app/timezone/data/TIMEZONES";
 import {getFromLocalStorage, setInLocalStorage} from "@/app/util/LocalStorageHelper";
 import {useStatsigEvents} from "@/components/statsig-event";
+import {logger} from "@/app/util/logger";
 
 export default function Timezones() {
   const [timezones, setTimezones] = useState<string[]>([]);
   const {logEvent} = useStatsigEvents();
-  
+  const hasFired = useRef(false);
+
   useEffect(() => {
     const stored = getFromLocalStorage<string>("timezones");
-    if (stored && stored?.length > 0) {
-      console.log('Initializing from local storage', stored);
+    if (stored && stored.length > 0) {
+      logger.log("Initializing from local storage", stored);
       setTimezones(stored);
     }
   }, []);
-  
+
   useEffect(() => {
+    if (!hasFired.current) {
+      hasFired.current = true;
+      return;
+    }
     setInLocalStorage("timezones", timezones);
     logEvent("myapp_pv_timezone", {page: "timezone", timezones: timezones.join(",")});
-  }, [timezones]);
-  
-  const addTimezone = (tz: string) => {
+  }, [timezones, logEvent]);
+
+  const addTimezone = useCallback((tz: string) => {
     if (!tz || timezones.includes(tz) || !TIMEZONES.includes(tz)) return;
     setTimezones((prev) => [...prev, tz]);
-  };
-  
-  const removeTimezone = (tz: string) => {
+  }, [timezones]);
+
+  const removeTimezone = useCallback((tz: string) => {
     setTimezones((prev) => prev.filter((t) => t !== tz));
-  };
+  }, []);
   
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">

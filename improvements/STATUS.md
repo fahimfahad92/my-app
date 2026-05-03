@@ -22,9 +22,9 @@ Items are tracked per plan file. Update status as work is done.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 2.1 | Remove duplicate `getArrayFromLocalStorage` from `LocalStorageHelper.tsx` | Not Started | Shared with timezone 2.1 |
+| 2.1 | Remove duplicate `getArrayFromLocalStorage` from `LocalStorageHelper.tsx` | Done | Shared with timezone 2.1 |
 | 2.2 | Extract cache TTL and ISR values into named constants | Not Started | |
-| 2.3 | Convert `statsig-event.jsx` and `statsig-provider.jsx` to TypeScript | Not Started | Shared with timezone 2.3 |
+| 2.3 | Convert `statsig-event.jsx` and `statsig-provider.jsx` to TypeScript | Done | Shared with timezone 2.3 |
 | 2.4 | Add `WeatherEventMetadata` type for Statsig events | Not Started | |
 | 2.5 | Fix fragile date parsing in `WeatherDetail.tsx:41-43` | Not Started | |
 | 2.6 | Add client-side city name validation in `WeatherCitySearchForm` | Not Started | |
@@ -79,21 +79,21 @@ Items are tracked per plan file. Update status as work is done.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 1.1 | Fix unused `catch` variable in `ClockCard.tsx:25` | Not Started | |
-| 1.2 | Add `logEvent` to `useEffect` dep array in `timezone/page.tsx:26` | Not Started | |
-| 1.3 | Replace bare `console.log` calls with `logger` in timezone files | Not Started | |
-| 1.4 | Log errors in `ClockCard` catch block instead of silently returning | Not Started | |
+| 1.1 | Fix unused `catch` variable in `ClockCard.tsx:25` | Done | |
+| 1.2 | Add `logEvent` to `useEffect` dep array in `timezone/page.tsx:26` | Done | Also guarded initial-mount fire with `hasFired` ref (covers 3.5) |
+| 1.3 | Replace bare `console.log` calls with `logger` in timezone files | Done | Covers statsig-event and statsig-provider too |
+| 1.4 | Log errors in `ClockCard` catch block instead of silently returning | Done | |
 
 ### Phase 2 — Code Quality & Type Safety
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 2.1 | Remove duplicate `getArrayFromLocalStorage` from `LocalStorageHelper.tsx` | Not Started | Shared with weather 2.1 |
-| 2.2 | Add TypeScript types for timezone domain objects | Not Started | |
-| 2.3 | Convert `statsig-event.jsx` and `statsig-provider.jsx` to TypeScript | Not Started | Shared with weather 2.3 |
-| 2.4 | Wrap `addTimezone` and `removeTimezone` in `useCallback` | Not Started | |
-| 2.5 | Move `useDebounce` hook out of `TimezoneSelector.tsx` | Not Started | |
-| 2.6 | Rename `TIMEZONES.tsx` → `TIMEZONES.ts` | Not Started | |
+| 2.1 | Remove duplicate `getArrayFromLocalStorage` from `LocalStorageHelper.tsx` | Done | Updated all call sites in weather files too |
+| 2.2 | Add TypeScript types for timezone domain objects | Done | Created `src/app/timezone/types/index.ts` |
+| 2.3 | Convert `statsig-event.jsx` and `statsig-provider.jsx` to TypeScript | Done | Renamed to `.tsx`; fixed `waitForInitialization` removal |
+| 2.4 | Wrap `addTimezone` and `removeTimezone` in `useCallback` | Done | |
+| 2.5 | Move `useDebounce` hook out of `TimezoneSelector.tsx` | Done | Extracted to `src/app/hooks/useDebounce.ts` |
+| 2.6 | Rename `TIMEZONES.tsx` → `TIMEZONES.ts` | Done | |
 
 ### Phase 3 — Performance
 

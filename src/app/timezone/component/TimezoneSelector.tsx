@@ -2,17 +2,7 @@
 
 import {useEffect, useMemo, useRef, useState} from "react";
 import {Check} from "lucide-react";
-
-function useDebounce<T>(value: T, delay = 150): T {
-  const [debounced, setDebounced] = useState(value);
-  
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  
-  return debounced;
-}
+import {useDebounce} from "@/app/hooks/useDebounce";
 
 export default function TimezoneSelector({
                                            options,

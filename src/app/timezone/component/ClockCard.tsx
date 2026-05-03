@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useState} from "react";
+import {logger} from "@/app/util/logger";
 
 export default function ClockCard({
                                     timezone,
@@ -10,11 +11,11 @@ export default function ClockCard({
   onRemove: () => void;
 }) {
   const [time, setTime] = useState("");
-  
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      
+
       try {
         const formatted = now.toLocaleTimeString("en-US", {
           timeZone: timezone,
@@ -22,13 +23,14 @@ export default function ClockCard({
           minute: "2-digit"
         });
         setTime(formatted);
-      } catch (unusedError) {
+      } catch (err) {
+        logger.error("Invalid timezone:", timezone, err);
         return;
       }
     };
-    
+
     updateTime();
-    const interval = setInterval(updateTime, 60000);
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [timezone]);
   

@@ -6,7 +6,7 @@ import {toast} from "sonner";
 import WeatherCard from "./component/WeatherCard";
 import WeatherCitySearchForm from "./component/WeatherCitySearchForm";
 import {
-  getArrayFromLocalStorage,
+  getFromLocalStorage,
   removeItemFromLocalStorageArray,
   setItemInLocalStorageAsArray,
 } from "@/app/util/LocalStorageHelper";
@@ -22,7 +22,7 @@ export default function WeatherApp() {
   
   useEffect(() => {
     logger.info("Initializing cities from local storage");
-    const stored = getArrayFromLocalStorage<string>("watchList");
+    const stored = getFromLocalStorage<string>("watchList");
     const normalized = Array.from(
       new Set((stored || []).map((c) => c?.trim().toLowerCase()).filter(Boolean))
     );
@@ -55,7 +55,7 @@ export default function WeatherApp() {
     const normalized = cityName.trim().toLowerCase();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    const watchList = getArrayFromLocalStorage("watchList").map((c: string) => c.trim().toLowerCase());
+    const watchList = getFromLocalStorage("watchList").map((c: string) => c.trim().toLowerCase());
     if (watchList.includes(normalized)) {
       logger.info(`${cityName} is already in the watch list`);
       toast.error(`${cityName} is already in the watch list`);

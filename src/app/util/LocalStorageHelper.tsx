@@ -1,13 +1,3 @@
-function getArrayFromLocalStorage<T = string[]>(key: string): T[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const item = localStorage.getItem(key);
-    return item ? (JSON.parse(item) as T[]) : [];
-  } catch {
-    return [];
-  }
-}
-
 function getFromLocalStorage<T = string[]>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
@@ -35,7 +25,7 @@ function setItemInLocalStorageAsArray<T = string[]>(
   value: T
 ): void {
   if (typeof window === "undefined") return;
-  const itemsArray = getArrayFromLocalStorage<T>(key);
+  const itemsArray = getFromLocalStorage<T>(key);
   try {
     localStorage.setItem(key, JSON.stringify([value, ...itemsArray]));
   } catch {
@@ -48,7 +38,7 @@ function removeItemFromLocalStorageArray<T = string[]>(
   valueToBeRemoved: T
 ): void {
   if (typeof window === "undefined") return;
-  const itemArray = getArrayFromLocalStorage<T>(key);
+  const itemArray = getFromLocalStorage<T>(key);
   const updatedItemArray = itemArray.filter(
     (currentValue) => currentValue !== valueToBeRemoved
   );
@@ -60,7 +50,6 @@ function removeItemFromLocalStorageArray<T = string[]>(
 }
 
 export {
-  getArrayFromLocalStorage,
   getFromLocalStorage,
   setInLocalStorage,
   removeItemFromLocalStorageArray,

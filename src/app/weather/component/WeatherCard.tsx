@@ -9,7 +9,7 @@ import WeatherDetail from "./WeatherDetail";
 
 import {memo, useEffect, useState} from "react";
 import {CardSkeleton} from "@/app/weather/component/Skeletons";
-import {getArrayFromLocalStorage} from "@/app/util/LocalStorageHelper";
+import {getFromLocalStorage} from "@/app/util/LocalStorageHelper";
 import {logger} from "@/app/util/logger";
 
 // Simple in-memory cache with TTL for weather overview requests
@@ -97,7 +97,7 @@ function WeatherCard({
     fetchData(false);
     
     // reflect watch list state
-    const watch = getArrayFromLocalStorage<string>("watchList").map((c) => c?.trim().toLowerCase());
+    const watch = getFromLocalStorage<string>("watchList").map((c) => c?.trim().toLowerCase());
     setIsSaved(watch.includes(cityName.trim().toLowerCase()));
     
     setIsHighlighted(true); // Highlight on mount/update

@@ -3,7 +3,7 @@ import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} 
 import {Label} from "@/components/ui/label";
 import {BookmarkPlus, RefreshCcw, Trash2} from "lucide-react";
 import {toast} from "sonner";
-import {WEATHER_API_CONSTANT, WEATHER_API_TYPE,} from "../constants/weather-constants";
+import {CACHE_TTL_MS, WEATHER_API_CONSTANT, WEATHER_API_TYPE,} from "../constants/weather-constants";
 import {WeatherResponse} from "../types/weather-types";
 import WeatherDetail from "./WeatherDetail";
 
@@ -12,8 +12,6 @@ import {CardSkeleton} from "@/app/weather/component/Skeletons";
 import {getFromLocalStorage} from "@/app/util/LocalStorageHelper";
 import {logger} from "@/app/util/logger";
 
-// Simple in-memory cache with TTL for weather overview requests
-const WEATHER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
 const overviewCache = new Map<string, { data: WeatherResponse; ts: number }>();
 
 function WeatherCard({
@@ -32,18 +30,16 @@ function WeatherCard({
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [localDate, setLocalDate] = useState<string>("");
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  
+
   const fetchData = async (isUpdate: boolean) => {
     try {
       const cacheKey = cityName.trim().toLowerCase();
       if (!isUpdate) {
         const cached = overviewCache.get(cacheKey);
-        if (cached && Date.now() - cached.ts < WEATHER_CACHE_TTL_MS) {
+        if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
           setData(cached.data);
-          setLocalDate(cached.data.location.localtime);
           setLoading(false);
           toast.success(`Loaded cached data for ${cityName}`);
           return;
@@ -68,7 +64,6 @@ function WeatherCard({
       
       const result: WeatherResponse = await response.json();
       setData(result);
-      setLocalDate(result.location.localtime);
       // update cache
       overviewCache.set(cityName.trim().toLowerCase(), {
         data: result,
@@ -113,7 +108,7 @@ function WeatherCard({
   }, [error, cityName, removeCity]);
   
   const refreshData = () => {
-    if (!cityName || cityName == "") return;
+    if (!cityName || cityName === "") return;
     setError(null);
     fetchData(true);
   };
@@ -194,7 +189,11 @@ function WeatherCard({
             <RefreshCcw/>
           </Button>
           
-          <WeatherDetail cityName={cityName} localDate={localDate}/>
+          <WeatherDetail
+            cityName={cityName}
+            localTimeEpoch={data.location.localtime_epoch}
+            tzId={data.location.tz_id}
+          />
           
           <Button
             variant="destructive"

@@ -11,9 +11,17 @@ export type CustomDotProps = {
   cy?: number;
   payload?: {
     icon?: string;
-    // [key: string]: any;
   };
 };
+
+export type WeatherEventName = "myapp_pv_weather";
+
+export interface WeatherEventMetadata {
+  page: string;
+  city?: string;
+  action?: string;
+  [key: string]: string | undefined;
+}
 
 export type TemperatureDataPoint = {
   hour: string;

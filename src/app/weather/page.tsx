@@ -13,13 +13,15 @@ import {
 import HomeComponent from "@/app/weather/component/HomeComponent";
 import {logger} from "@/app/util/logger";
 import {useStatsigEvents} from "@/components/statsig-event";
+import type {WeatherEventMetadata, WeatherEventName} from "@/app/weather/types/weather-types";
 
+const WEATHER_EVENT: WeatherEventName = "myapp_pv_weather";
 
 export default function WeatherApp() {
   const [cityName, setCityName] = useState("");
-  const [cities, setCities] = useState<string[] | []>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const {logEvent} = useStatsigEvents();
-  
+
   useEffect(() => {
     logger.info("Initializing cities from local storage");
     const stored = getFromLocalStorage<string>("watchList");
@@ -27,25 +29,27 @@ export default function WeatherApp() {
       new Set((stored || []).map((c) => c?.trim().toLowerCase()).filter(Boolean))
     );
     setCities(normalized);
-    logEvent("myapp_pv_weather", {page: "weather"});
-  }, []);
-  
+    const meta: WeatherEventMetadata = {page: "weather"};
+    logEvent(WEATHER_EVENT, meta);
+  }, [logEvent]);
+
   useEffect(() => {
     const normalizedCity = cityName.trim().toLowerCase();
     if (!normalizedCity) return;
-    
+
     setCities((prevCities: string[]) => {
       if (prevCities.includes(normalizedCity)) {
         toast.info(`${cityName} is already shown below`);
         return [...prevCities];
       }
       logger.info("City updated for " + cityName);
-      logEvent("myapp_pv_weather", {page: "weather", city: normalizedCity, action: "add"});
-      
+      const meta: WeatherEventMetadata = {page: "weather", city: normalizedCity, action: "add"};
+      logEvent(WEATHER_EVENT, meta);
+
       return [normalizedCity, ...prevCities];
     });
     setCityName("");
-  }, [cityName]);
+  }, [cityName, logEvent]);
   
   const removeCity = useCallback((cityName: string) => {
     setCities((prev) => prev.filter((currentLocation) => currentLocation !== cityName));
@@ -84,7 +88,7 @@ export default function WeatherApp() {
         // If the corrected city already exists, just remove the previous entry
         return withoutPrev;
       }
-      console.log("City updated for " + updatedCity);
+      logger.log("City updated for " + updatedCity);
       return [normalizedCity, ...withoutPrev];
     });
   }, []);

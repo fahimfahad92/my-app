@@ -10,26 +10,26 @@ Items are tracked per plan file. Update status as work is done.
 
 ### Phase 1 — Critical Fixes
 
-| #   | Item                                                             | Status      | Notes |
-|-----|------------------------------------------------------------------|-------------|-------|
-| 1.1 | Fix loose equality `==` in `WeatherCard.tsx:116`                 | Not Started |       |
-| 1.2 | Add `logEvent` to `useEffect` dep array in `weather/page.tsx:31` | Not Started |       |
-| 1.3 | Replace bare `console.log` calls with `logger` in weather files  | Not Started |       |
-| 1.4 | Remove redundant double type cast in `route.ts:75,77`            | Not Started |       |
-| 1.5 | Fix `useState<string[] \| []>` annotation in `weather/page.tsx`  | Not Started |       |
+| #   | Item                                                             | Status | Notes                                                                            |
+|-----|------------------------------------------------------------------|--------|----------------------------------------------------------------------------------|
+| 1.1 | Fix loose equality `==` in `WeatherCard.tsx:116`                 | Done   | `cityName === ""`                                                                |
+| 1.2 | Add `logEvent` to `useEffect` dep array in `weather/page.tsx:31` | Done   | Added to both mount and city-add effects                                         |
+| 1.3 | Replace bare `console.log` calls with `logger` in weather files  | Done   | `weather/page.tsx:87`, `WeatherCitySearchForm.tsx:33`; statsig files done before |
+| 1.4 | Remove redundant double type cast in `route.ts:75,77`            | Done   | Single `errBody: ErrorResponse` then field access                                |
+| 1.5 | Fix `useState<string[] \| []>` annotation in `weather/page.tsx`  | Done   | `useState<string[]>([])`                                                         |
 
 ### Phase 2 — Code Quality & Type Safety
 
-| #   | Item                                                                      | Status      | Notes                    |
-|-----|---------------------------------------------------------------------------|-------------|--------------------------|
-| 2.1 | Remove duplicate `getArrayFromLocalStorage` from `LocalStorageHelper.tsx` | Done        | Shared with timezone 2.1 |
-| 2.2 | Extract cache TTL and ISR values into named constants                     | Not Started |                          |
-| 2.3 | Convert `statsig-event.jsx` and `statsig-provider.jsx` to TypeScript      | Done        | Shared with timezone 2.3 |
-| 2.4 | Add `WeatherEventMetadata` type for Statsig events                        | Not Started |                          |
-| 2.5 | Fix fragile date parsing in `WeatherDetail.tsx:41-43`                     | Not Started |                          |
-| 2.6 | Add client-side city name validation in `WeatherCitySearchForm`           | Not Started |                          |
-| 2.7 | Remove commented-out `[key: string]: any` in `LineChartComponent.tsx:15`  | Not Started |                          |
-| 2.8 | Rename `weather-constants.tsx` → `weather-constants.ts`                   | Not Started |                          |
+| #   | Item                                                                      | Status | Notes                                                                                                                      |
+|-----|---------------------------------------------------------------------------|--------|----------------------------------------------------------------------------------------------------------------------------|
+| 2.1 | Remove duplicate `getArrayFromLocalStorage` from `LocalStorageHelper.tsx` | Done   | Shared with timezone 2.1                                                                                                   |
+| 2.2 | Extract cache TTL and ISR values into named constants                     | Done   | `CACHE_TTL_MS`, `ISR_REVALIDATE_SECONDS` (and `CITY_NAME_PATTERN`) added to `weather-constants.ts`                         |
+| 2.3 | Convert `statsig-event.jsx` and `statsig-provider.jsx` to TypeScript      | Done   | Shared with timezone 2.3; `EventMetadata` loosened to allow undefined; wrapper now filters undefined before Statsig call   |
+| 2.4 | Add `WeatherEventMetadata` type for Statsig events                        | Done   | `WeatherEventName` + `WeatherEventMetadata` in `weather-types.ts`; used at both `logEvent` call sites in `weather/page.tsx` |
+| 2.5 | Fix fragile date parsing in `WeatherDetail.tsx:41-43`                     | Done   | Switched to `localTimeEpoch` + `tzId` props; `Intl.DateTimeFormat` with `en-CA` derives `YYYY-MM-DD` in the city's timezone |
+| 2.6 | Add client-side city name validation in `WeatherCitySearchForm`           | Done   | RHF `pattern` rule using shared `CITY_NAME_PATTERN`; inline error with `role="alert"`                                      |
+| 2.7 | Remove commented-out `[key: string]: any` in `LineChartComponent.tsx:15`  | Done   | Removed from `CustomDotProps` in `weather-types.ts` (where the type lives)                                                 |
+| 2.8 | Rename `weather-constants.tsx` → `weather-constants.ts`                   | Done   |                                                                                                                            |
 
 ### Phase 3 — Performance
 

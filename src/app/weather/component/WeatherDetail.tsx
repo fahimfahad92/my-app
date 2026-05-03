@@ -23,25 +23,30 @@ import {DetailSkeleton} from "./Skeletons";
 import {logger} from "@/app/util/logger";
 
 export default function WeatherDetail({
-                                        cityName, localDate,
+                                        cityName, localTimeEpoch, tzId,
                                       }: {
   cityName: string;
-  localDate: string;
+  localTimeEpoch: number;
+  tzId: string;
 }) {
   const [data, setData] = useState<WeatherDetailResponse | null>(null);
   const [chartData, setChartData] = useState<TemperatureDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
-    // Prefer parsing the YYYY-MM-DD portion from localDate to avoid timezone shifts
-    const queryDate = (localDate && localDate.includes(" ")
-      ? localDate.split(" ")[0]
-      : new Date(localDate).toISOString().split("T")[0]);
-    
+
+    // Derive YYYY-MM-DD in the city's timezone from the epoch — avoids
+    // any locale-string parsing ambiguity. en-CA's default date format is YYYY-MM-DD.
+    const queryDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tzId,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(localTimeEpoch * 1000));
+
     try {
       const urlParams = new URLSearchParams({
         cityName: cityName || "",
@@ -76,7 +81,7 @@ export default function WeatherDetail({
   
   useEffect(() => {
     if (cityName) fetchData();
-  }, [cityName, localDate]);
+  }, [cityName, localTimeEpoch, tzId]);
   
   return (
     <Dialog>

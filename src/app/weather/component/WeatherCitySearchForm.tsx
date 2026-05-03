@@ -1,22 +1,24 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@radix-ui/react-label";
-import { useForm } from "react-hook-form";
-import { useRef, useState } from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Label} from "@radix-ui/react-label";
+import {useForm} from "react-hook-form";
+import {useRef, useState} from "react";
 import {
   WeatherCitySearchFormProps,
   WeatherCitySearchProps,
 } from "../types/weather-types";
+import {CITY_NAME_PATTERN} from "../constants/weather-constants";
+import {logger} from "@/app/util/logger";
 
 export default function WeatherCitySearchForm({
-  setCityName,
-}: WeatherCitySearchProps) {
+                                                setCityName,
+                                              }: WeatherCitySearchProps) {
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: {errors},
   } = useForm<WeatherCitySearchFormProps>();
 
   const debounceRef = useRef<number | null>(null);
@@ -30,7 +32,7 @@ export default function WeatherCitySearchForm({
     }
     setSubmitting(true);
     debounceRef.current = window.setTimeout(() => {
-      console.log(`Searched city ${val}`);
+      logger.log(`Searched city ${val}`);
       setCityName(val);
       setSubmitting(false);
       reset();
@@ -51,16 +53,26 @@ export default function WeatherCitySearchForm({
             <div className="flex flex-col sm:flex-row gap-3">
               <Input
                 id="cityName"
-                {...register("cityName", { required: true })}
+                {...register("cityName", {
+                  required: "City name is required",
+                  pattern: {
+                    value: CITY_NAME_PATTERN,
+                    message:
+                      "Use letters, spaces, hyphens, and periods only (1–64 chars)",
+                  },
+                })}
                 placeholder="e.g. Dhaka"
                 className="flex-1"
+                aria-invalid={errors.cityName ? "true" : "false"}
               />
               <Button type="submit" className="sm:w-auto w-full" disabled={submitting} aria-busy={submitting}>
                 {submitting ? "Searching..." : "Search"}
               </Button>
             </div>
             {errors.cityName && (
-              <p className="text-sm text-red-600">City name is required</p>
+              <p className="text-sm text-red-600" role="alert">
+                {errors.cityName.message}
+              </p>
             )}
           </div>
         </form>

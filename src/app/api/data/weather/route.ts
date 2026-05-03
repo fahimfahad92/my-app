@@ -1,4 +1,5 @@
 import {
+  ISR_REVALIDATE_SECONDS,
   WEATHER_API_PATHS,
   WEATHER_API_TYPE,
   WEATHER_ERROR_MESSAGES,
@@ -68,13 +69,13 @@ export async function GET(request: NextRequest) {
     }
     
     // Fetch and return weather data with ISR revalidation
-    const res = await fetch(url, {next: {revalidate: 300}});
-    
+    const res = await fetch(url, {next: {revalidate: ISR_REVALIDATE_SECONDS}});
+
     if (!res.ok) {
-      const errorResponse: ErrorResponse = await res.json();
-      const code = (errorResponse as ErrorResponse)?.error?.code;
+      const errBody: ErrorResponse = await res.json();
+      const code = errBody?.error?.code;
       // Map known WeatherAPI error codes to friendly messages
-      let friendly = (errorResponse as ErrorResponse)?.error?.message || "An error occurred";
+      let friendly = errBody?.error?.message || "An error occurred";
       if (code === 1006) friendly = "No matching location found";
       if (code === 2006) friendly = "API key is invalid or missing";
       if (code === 9999) friendly = "Weather service temporary error. Please try again.";

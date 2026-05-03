@@ -1,4 +1,7 @@
+import type {TimezoneEntry} from "@/app/timezone/data/TIMEZONES";
+
 export type Timezone = string;
+export type {TimezoneEntry};
 
 export interface ClockCardProps {
   timezone: Timezone;
@@ -11,10 +14,10 @@ export interface ClockListProps {
   onReorder: (from: number, to: number) => void;
 }
 
-export const MAX_TIMEZONES = 12;
-
 export interface TimezoneSelectorProps {
-  options: Timezone[];
+  options: TimezoneEntry[];
   selected: Timezone[];
   onAdd: (tz: Timezone) => void;
 }
+
+export const MAX_TIMEZONES = 12;

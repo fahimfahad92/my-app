@@ -5,7 +5,7 @@ import {toast} from "sonner";
 import TimezoneSelector from "@/app/timezone/component/TimezoneSelector";
 import ClockList from "@/app/timezone/component/ClockList";
 import HomeComponent from "@/app/weather/component/HomeComponent";
-import {TIMEZONES} from "@/app/timezone/data/TIMEZONES";
+import {TIMEZONE_ENTRIES, TIMEZONES} from "@/app/timezone/data/TIMEZONES";
 import {getFromLocalStorage, setInLocalStorage} from "@/app/util/LocalStorageHelper";
 import {useStatsigEvents} from "@/components/statsig-event";
 import {logger} from "@/app/util/logger";
@@ -71,7 +71,7 @@ export default function Timezones() {
         </h1>
 
         <TimezoneSelector
-          options={TIMEZONES}
+          options={TIMEZONE_ENTRIES}
           selected={timezones}
           onAdd={addTimezone}
         />

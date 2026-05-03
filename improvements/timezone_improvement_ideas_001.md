@@ -161,22 +161,29 @@ Visual and interaction improvements to make the feature feel polished.
 
 ## Phase 5 — Advanced / Future Features
 
-Larger scope items to consider after the above phases are stable.
+> **OUT OF SCOPE — Items 5.1–5.5 below are intentionally not pursued and should not be re-proposed in future improvement plans for this feature.** They are kept here as historical record only. Only new items added under Phase 5 (5.6+) are in scope.
 
-### 5.1 Add a time-difference calculator
+### 5.1 Add a time-difference calculator — Out of Scope
 - A small UI that, given two selected timezones, shows "City A is X hours ahead/behind City B"
 
-### 5.2 Export/share timezone list
+### 5.2 Export/share timezone list — Out of Scope
 - Generate a shareable URL (query params or hash) so a user can send their clock configuration to someone else
 
-### 5.3 Meeting time finder
+### 5.3 Meeting time finder — Out of Scope
 - Input a desired meeting time in one timezone, see what time it is in all selected timezones — highlight "reasonable" hours (9 AM–6 PM) in green
 
-### 5.4 Replace static `TIMEZONES.ts` list with Intl-derived data
+### 5.4 Replace static `TIMEZONES.ts` list with Intl-derived data — Out of Scope
 - Use `Intl.supportedValuesOf('timeZone')` (available in modern browsers and Node 18+) to generate the list at runtime or build time, ensuring it is always up-to-date without manual maintenance
 
-### 5.5 Persist timezone order server-side
+### 5.5 Persist timezone order server-side — Out of Scope
 - For authenticated users, sync timezone preferences to a backend (or Statsig user properties) so the list is consistent across devices
+
+### 5.6 Search timezones by country name OR timezone string
+- **File:** `src/app/timezone/data/TIMEZONES.ts`, `src/app/timezone/component/TimezoneSelector.tsx`, `src/app/timezone/types/index.ts`
+- **Goal:** Typing `"japan"` finds `Asia/Tokyo`. Typing `"germany"` finds `Europe/Berlin`. Typing `"asia"` still works.
+- **Approach:** Replace the flat `TIMEZONES` string array with a `TIMEZONE_ENTRIES: {timezone, country}[]` covering all UN member states (Israel intentionally excluded), Vatican City, Palestine, Kosovo, and select territories with their own IANA zones (Hong Kong, Macau, Puerto Rico, Greenland, etc.). `TIMEZONES` stays exported as a derived `Array.from(new Set(...))` so existing validation in `page.tsx` keeps working.
+- **Selector:** Filter matches on either `entry.country` or `entry.timezone`. Dropdown shows two lines per row (country on top, timezone below). Highlight applies to either field.
+- **Constraint:** No timezone or country related to Israel — verified via grep on the data file (only doc comments reference the exclusion).
 
 ---
 
@@ -188,6 +195,6 @@ Larger scope items to consider after the above phases are stable.
 | 2     | Code Quality       | 6    | S–M     | High     |
 | 3     | Performance        | 5    | S       | High     |
 | 4     | UI / UX            | 10   | S–L     | Medium   |
-| 5     | Advanced Features  | 5    | L–XL    | Low      |
+| 5     | Advanced Features  | 6 (5 out of scope, 1 active) | L–XL    | Low      |
 
 **Effort key:** XS < 30 min · S < 2 h · M < 1 day · L < 3 days · XL = spike needed

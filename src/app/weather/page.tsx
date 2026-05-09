@@ -32,6 +32,7 @@ export default function WeatherApp() {
   const {logEvent} = useStatsigEvents();
   const hasFired = useRef(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const citiesRef = useRef(cities);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -106,6 +107,9 @@ export default function WeatherApp() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Keep citiesRef current so handleDragEnd always sees the final order
+  useEffect(() => { citiesRef.current = cities; }, [cities]);
 
   // Page-view analytics — fires once
   useEffect(() => {
@@ -199,7 +203,12 @@ export default function WeatherApp() {
     setDraggedIndex(idx);
   };
 
-  const handleDragEnd = () => setDraggedIndex(null);
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    // Persist the new order: save watchlisted cities in their dragged sequence
+    const reordered = citiesRef.current.filter(c => watchList.includes(c));
+    setInLocalStorage("watchList", reordered);
+  };
 
   return (
     <>

@@ -45,7 +45,7 @@ export default function LineChartComponent({date, chartData, unit}: LineChartCom
   return (
     <div>
       <p className="text-base font-semibold text-gray-800 mb-1">{date} — Hourly Temperature</p>
-      <div className="w-full h-56">
+      <div className="w-full h-56 md:h-[22rem]">
         <ResponsiveContainer>
           <ComposedChart data={processedData} margin={{top: 10, right: 10, left: -10, bottom: 5}}>
             <defs>
